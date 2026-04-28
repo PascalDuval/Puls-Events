@@ -372,35 +372,35 @@ Sur les 8014 documents RAG versionnes :
 
 ## Scripts de pre-processing et documentation integree par docstrings
 
-Le projet documente deja ses scripts techniques via des docstrings explicites.
+Tous les scripts du pipeline sont documentes via des **docstrings de style Google/NumPy**
+couvrant chaque module (description, entrees, sorties, usage) et chaque fonction publique
+(Args / Returns / Raises). Cette documentation integree garantit que les hypotheses
+de conception restent visibles a la maintenance et que les artefacts produits
+sont explicitement nommes.
 
-### Scripts de pre-processing
+### Scripts de pre-processing (collecte et preparation du corpus)
 
-- `openagenda_culture_france_rag.py`
-  - fonctions specialisees de parsing, nettoyage, controle qualite et generation de documents.
-- `vectorize_events_mistral.py`
-  - preparation du texte d'embedding,
-  - resolution de cle API,
-  - reprise sur traitement partiel,
-  - docstrings sur `embed_texts`, `_load_already_written_ids`, `_compact_output_file`, `_count_lines`.
+- **`openagenda_culture_france_rag.py`** — docstring module + toutes les fonctions :
+  `parse_dt`, `first_non_empty`, `to_text`, `clean_text`, `strip_html`,
+  `parse_timings_window`, `sanitize_date_range`, `extract_tags`, `is_vectorizable`,
+  `looks_cultural`, `is_ile_de_france`, `extract_dates`, `overlaps_window`,
+  `build_window_where`, `normalize_record`.
+
+- **`vectorize_events_mistral.py`** — docstring module + toutes les fonctions :
+  `clean_text`, `first_non_empty`, `to_tag_list`, `build_fallback_text`,
+  `normalize_source_url`, `build_doc_id`, `prepare_embedding_document`, `chunked`,
+  `embed_texts`, `_load_already_written_ids`, `_compact_output_file`.
 
 ### Scripts d'indexation et recherche
 
-- `index_events_faiss.py`
-  - docstring de module qui documente l'objectif, les entrees et les artefacts de sortie,
-  - docstrings sur `load_vectorized_events`, `create_faiss_index`, `save_index_and_metadata`, `semantic_search`.
-- `faiss_searcher.py`
-  - docstring de module et docstrings de classe / methodes pour la recherche semantique et hybride.
-- `rag_chatbot_mistral.py`
-  - docstring de classe concise, avec cycle `embed -> retrieve -> generate` clairement isole.
+- **`index_events_faiss.py`** — docstring module + fonctions :
+  `load_vectorized_events`, `create_faiss_index`, `save_index_and_metadata`, `semantic_search`.
 
-### Pourquoi cette documentation integree est utile
+- **`faiss_searcher.py`** — docstring module, classe `FAISSSearcher` et methodes :
+  `search`, `search_hybrid`, `get_by_id`, `get_stats`.
 
-La docstring au plus pres du code garantit que :
-
-- les hypotheses de conception restent visibles au moment de la maintenance,
-- les artefacts produits sont explicitement nommes,
-- les limitations de certaines strategies FAISS sont documentees au meme endroit que l'implementation.
+- **`rag_chatbot_mistral.py`** — docstrings sur `RAGChatbot` et son cycle
+  `embed -> retrieve -> generate`, guardrails, et helpers internes.
 
 ## Scripts de vectorisation et creation / gestion d'index vectoriels
 

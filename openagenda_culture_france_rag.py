@@ -1,3 +1,22 @@
+"""
+Script de collecte et de pre-processing des evenements culturels OpenAgenda
+pour le pipeline RAG Pull-Events (perimetre Ile-de-France).
+
+Responsabilites :
+    1. Collecte paginee de l'API OpenDataSoft/OpenAgenda avec filtre region IDF.
+    2. Normalisation et nettoyage des champs (HTML, espaces, dates, tags).
+    3. Filtrage par fenetre temporelle (logique de recouvrement d'intervalle).
+    4. Filtrage culturel (termes metier) et geographique (IDF).
+    5. Construction d'un document RAG structure au format JSONL.
+    6. Controle qualite avant ecriture (vectorisabilite, URL, contenu minimal).
+    7. Deduplication par identifiant source.
+
+Sortie :
+    data/evenements_publics_openagenda_culture_ile_de_france_rag.jsonl
+
+Usage :
+    python openagenda_culture_france_rag.py
+"""
 from __future__ import annotations
 
 import json
@@ -57,6 +76,15 @@ MIN_CONTENT_CHARS = 120
 
 
 def parse_dt(value: Any) -> Optional[datetime]:
+    """
+    Parse une valeur quelconque en datetime UTC.
+
+    Args:
+        value: Chaine ISO, objet datetime ou None.
+
+    Returns:
+        datetime UTC ou None si la valeur ne peut pas etre parsee.
+    """
     if value is None:
         return None
     if isinstance(value, datetime):
@@ -74,6 +102,16 @@ def parse_dt(value: Any) -> Optional[datetime]:
 
 
 def first_non_empty(record: Dict[str, Any], keys: List[str]) -> Optional[Any]:
+    """
+    Retourne la premiere valeur non vide trouvee parmi les cles indiquees.
+
+    Args:
+        record: Dictionnaire source (enregistrement OpenAgenda).
+        keys: Liste de cles a essayer dans l'ordre.
+
+    Returns:
+        Premiere valeur non vide, ou None si aucune n'est trouvee.
+    """
     for key in keys:
         if key in record and record[key] not in (None, "", [], {}):
             return record[key]
@@ -81,6 +119,20 @@ def first_non_empty(record: Dict[str, Any], keys: List[str]) -> Optional[Any]:
 
 
 def to_text(value: Any) -> str:
+    """
+    Convertit une valeur arbitraire en chaine de caracteres.
+
+    - None  -> chaine vide
+    - liste -> elements joints par ' | '
+    - dict  -> serialise en JSON
+    - autre -> str()
+
+    Args:
+        value: Valeur a convertir.
+
+    Returns:
+        Chaine de caracteres resultante.
+    """
     if value is None:
         return ""
     if isinstance(value, list):
@@ -91,16 +143,46 @@ def to_text(value: Any) -> str:
 
 
 def clean_text(value: str) -> str:
-    # Normalise les espaces pour stabiliser la qualité des embeddings.
+    """
+    Normalise les espaces dans une chaine pour stabiliser la qualite des embeddings.
+
+    Args:
+        value: Chaine brute potentiellement mal formatee.
+
+    Returns:
+        Chaine avec espaces multiples reduits a un seul, sans espaces en debut/fin.
+    """
+    # Normalise les espaces pour stabiliser la qualite des embeddings.
     return re.sub(r"\s+", " ", (value or "")).strip()
 
 
 def strip_html(text: str) -> str:
+    """
+    Supprime les balises HTML d'une chaine et normalise les espaces resultants.
+
+    Args:
+        text: Texte HTML brut.
+
+    Returns:
+        Texte sans balises, espaces normalises.
+    """
     no_html = re.sub(r"<[^>]+>", " ", text or "")
     return clean_text(no_html)
 
 
 def parse_timings_window(value: Any) -> tuple[Optional[datetime], Optional[datetime]]:
+    """
+    Extrait la fenetre temporelle minimale/maximale depuis un tableau timings OpenAgenda.
+
+    Le champ timings est une liste de dicts {begin, end}. Cette fonction retourne
+    la date de debut la plus ancienne et la date de fin la plus recente rencontrees.
+
+    Args:
+        value: Champ timings (chaine JSON ou liste de dicts).
+
+    Returns:
+        Tuple (datetime_debut, datetime_fin), l'un ou les deux pouvant etre None.
+    """
     if not value:
         return None, None
 
@@ -130,12 +212,38 @@ def parse_timings_window(value: Any) -> tuple[Optional[datetime], Optional[datet
 
 
 def sanitize_date_range(start_dt: Optional[datetime], end_dt: Optional[datetime]) -> tuple[Optional[datetime], Optional[datetime]]:
+    """
+    Corrige un intervalle de dates incoherent (fin avant debut).
+
+    Si end_dt < start_dt, les deux valeurs sont echangees. Cela arrive
+    sur certains enregistrements OpenAgenda ou les champs sont inverses.
+
+    Args:
+        start_dt: Date de debut candidate.
+        end_dt: Date de fin candidate.
+
+    Returns:
+        Tuple (debut_corrige, fin_corrigee).
+    """
     if start_dt and end_dt and end_dt < start_dt:
         return end_dt, start_dt
     return start_dt, end_dt
 
 
 def extract_tags(record: Dict[str, Any]) -> List[str]:
+    """
+    Extrait et normalise les tags depuis un enregistrement OpenAgenda.
+
+    Explore les champs keywords, keywords_fr, tags, theme, themes,
+    themes_fr, category dans cet ordre de priorite. Deduplication
+    en preservant l'ordre. Si aucun tag n'est trouve, retourne ['culture'].
+
+    Args:
+        record: Enregistrement OpenAgenda brut.
+
+    Returns:
+        Liste de tags normalises, sans doublons.
+    """
     keywords = first_non_empty(record, [
         "keywords", "keywords_fr", "tags", "theme", "themes", "themes_fr", "category"
     ])
@@ -164,6 +272,20 @@ def extract_tags(record: Dict[str, Any]) -> List[str]:
 
 
 def is_vectorizable(doc: Dict[str, Any]) -> bool:
+    """
+    Verifie qu'un document RAG est suffisamment riche pour etre vectorise.
+
+    Conditions :
+    - Titre d'au moins 3 caracteres.
+    - Contenu principal d'au moins MIN_CONTENT_CHARS caracteres.
+    - Si le resume est absent, le contenu doit depasser MIN_CONTENT_CHARS + 30.
+
+    Args:
+        doc: Document RAG structure (champs title, content, summary).
+
+    Returns:
+        True si le document peut etre vectorise, False sinon.
+    """
     title = clean_text(to_text(doc.get("title")))
     content = clean_text(to_text(doc.get("content")))
     summary = clean_text(to_text(doc.get("summary")))
@@ -179,6 +301,18 @@ def is_vectorizable(doc: Dict[str, Any]) -> bool:
 
 
 def looks_cultural(record: Dict[str, Any]) -> bool:
+    """
+    Verifie qu'un enregistrement OpenAgenda est culturellement pertinent.
+
+    Concatène le titre, la description et les tags en un blob textuel,
+    puis cherche la presence d'au moins un terme de CULTURE_TERMS.
+
+    Args:
+        record: Enregistrement OpenAgenda brut.
+
+    Returns:
+        True si au moins un terme culturel est detecte.
+    """
     blob_parts = [
         to_text(first_non_empty(record, ["title", "title_fr", "name"])),
         to_text(first_non_empty(record, ["description", "description_fr", "longdescription", "lead_text", "keywords", "keywords_fr"])),
@@ -189,6 +323,19 @@ def looks_cultural(record: Dict[str, Any]) -> bool:
 
 
 def is_ile_de_france(record: Dict[str, Any]) -> bool:
+    """
+    Verifie qu'un enregistrement est geographiquement en Ile-de-France.
+
+    Deux strategies combinees :
+    1. Correspondance textuelle sur le champ region (ile-de-france).
+    2. Correspondance sur le code departement (75, 77, 78, 91, 92, 93, 94, 95).
+
+    Args:
+        record: Enregistrement OpenAgenda brut.
+
+    Returns:
+        True si l'evenement est localise en Ile-de-France.
+    """
     region_blob = clean_text(to_text(first_non_empty(record, [
         "location_region", "region", "region_name"
     ]))).lower()
@@ -207,7 +354,20 @@ def is_ile_de_france(record: Dict[str, Any]) -> bool:
 
 
 def extract_dates(record: Dict[str, Any]) -> tuple[Optional[datetime], Optional[datetime]]:
-    # Priorité aux champs fréquents OpenAgenda
+    """
+    Extrait la fenetre temporelle d'un enregistrement OpenAgenda.
+
+    Essaie plusieurs champs dans l'ordre de priorite (firstdate_begin,
+    lastdate_end, etc.), puis utilise le tableau timings en fallback.
+    Corrige les intervalles incoherents via sanitize_date_range.
+
+    Args:
+        record: Enregistrement OpenAgenda brut.
+
+    Returns:
+        Tuple (datetime_debut, datetime_fin), l'un ou les deux pouvant etre None.
+    """
+    # Priorite aux champs frequents OpenAgenda
     start = first_non_empty(record, [
         "firstdate_begin", "date_first", "date_start", "start", "starts_at",
         "begin", "daterange_start", "firstdate_end", "lastdate_begin"
@@ -240,6 +400,22 @@ def overlaps_window(
     window_start: datetime,
     window_end: datetime,
 ) -> bool:
+    """
+    Verifie qu'un intervalle d'evenement croise une fenetre temporelle cible.
+
+    La logique de recouvrement est : event_end >= window_start ET event_start <= window_end.
+    Cela conserve les evenements recurrents ou a longue duree dont le debut
+    est anterieur a la fenetre mais la fin reste dans la periode d'interet.
+
+    Args:
+        start_dt: Debut de l'evenement.
+        end_dt: Fin de l'evenement.
+        window_start: Borne inferieure de la fenetre de collecte.
+        window_end: Borne superieure de la fenetre de collecte.
+
+    Returns:
+        True si l'evenement croise la fenetre.
+    """
     effective_start = start_dt or end_dt
     effective_end = end_dt or start_dt
     if not effective_start or not effective_end:
@@ -250,6 +426,19 @@ def overlaps_window(
 
 
 def build_window_where(window_start: datetime, window_end: datetime) -> str:
+    """
+    Construit le filtre SQL-like WHERE pour l'API OpenDataSoft.
+
+    Restreint la collecte a la France, region IDF, et aux evenements
+    dont la plage de dates croise la fenetre WINDOW_START_UTC/WINDOW_END_UTC.
+
+    Args:
+        window_start: Borne inferieure de la fenetre de collecte.
+        window_end: Borne superieure de la fenetre de collecte.
+
+    Returns:
+        Chaine WHERE compatible avec l'API OpenDataSoft.
+    """
     start_date = window_start.date().isoformat()
     end_date = window_end.date().isoformat()
     return (
@@ -261,7 +450,22 @@ def build_window_where(window_start: datetime, window_end: datetime) -> str:
 
 
 def normalize_record(record: Dict[str, Any]) -> Dict[str, Any]:
-    title = clean_text(to_text(first_non_empty(record, ["title", "title_fr", "name"]))) or "Événement culturel"
+    """
+    Transforme un enregistrement OpenAgenda brut en document RAG structure.
+
+    Extrait et normalise : titre, resume, dates, ville, region, tags, URL source.
+    Construit le champ content assemble (texte principal pour l'embedding).
+    Ajoute un text_preview tronque a 300 caracteres.
+
+    Args:
+        record: Enregistrement OpenAgenda brut tel que retourne par l'API.
+
+    Returns:
+        Dictionnaire RAG structure avec les champs :
+        id, title, content, summary, event_start, event_end, city, region,
+        country, tags, source_record_url, raw_uid, text_preview, metadata.
+    """
+    title = clean_text(to_text(first_non_empty(record, ["title", "title_fr", "name"]))) or "Evenement culturel"
     summary = strip_html(to_text(first_non_empty(record, ["description", "description_fr", "lead_text", "longdescription", "longdescription_fr"])))
     start_dt, end_dt = extract_dates(record)
     start_dt, end_dt = sanitize_date_range(start_dt, end_dt)

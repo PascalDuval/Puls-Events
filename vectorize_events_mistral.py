@@ -1,3 +1,20 @@
+"""
+Script de vectorisation des evenements culturels avec l'API Mistral AI.
+
+Responsabilites :
+    1. Lecture des documents RAG JSONL produits par openagenda_culture_france_rag.py.
+    2. Preparation et nettoyage du texte a vectoriser (HTML, espaces, tags).
+    3. Appel par batch a mistral-embed pour obtenir les embeddings (dim 1024).
+    4. Reprise a chaud : les IDs deja ecrits dans le fichier de sortie sont
+       ignores (utile en cas d'interruption du script).
+    5. Compactage du fichier de sortie (deduplication + tri par ID source).
+
+Sortie :
+    data/evenements_publics_openagenda_culture_ile_de_france_vectors.jsonl
+
+Usage :
+    python vectorize_events_mistral.py --api-key <CLE> [options]
+"""
 from __future__ import annotations
 
 import argparse
@@ -20,6 +37,15 @@ DEFAULT_MIN_TEXT_CHARS = 120
 
 
 def clean_text(value: Any) -> str:
+    """
+    Normalise un texte pour la vectorisation : supprime HTML et espaces multiples.
+
+    Args:
+        value: Valeur a convertir (chaine, None, ou autre).
+
+    Returns:
+        Chaine nettoyee, sans balises HTML ni espaces superflus.
+    """
     text = "" if value is None else str(value)
     text = re.sub(r"<[^>]+>", " ", text)
     text = re.sub(r"\s+", " ", text)
@@ -27,6 +53,16 @@ def clean_text(value: Any) -> str:
 
 
 def first_non_empty(record: Dict[str, Any], keys: List[str]) -> Optional[Any]:
+    """
+    Retourne la premiere valeur non vide parmi une liste de cles d'un dict.
+
+    Args:
+        record: Dictionnaire source.
+        keys: Cles a essayer dans l'ordre.
+
+    Returns:
+        Premiere valeur non vide (pas None, "", [], {}), ou None.
+    """
     for key in keys:
         value = record.get(key)
         if value not in (None, "", [], {}):
@@ -35,6 +71,18 @@ def first_non_empty(record: Dict[str, Any], keys: List[str]) -> Optional[Any]:
 
 
 def to_tag_list(value: Any) -> List[str]:
+    """
+    Convertit un champ tags en liste de chaines deduplicuees.
+
+    Accepte une liste Python, une chaine separee par ',' ';' ou '|',
+    ou None. Deduplication insensible a la casse avec preservation de l'ordre.
+
+    Args:
+        value: Champ tags brut (liste, chaine ou None).
+
+    Returns:
+        Liste de tags uniques, dans l'ordre d'apparition.
+    """
     if isinstance(value, list):
         raw = [clean_text(v) for v in value if clean_text(v)]
     elif value:
@@ -54,6 +102,18 @@ def to_tag_list(value: Any) -> List[str]:
 
 
 def build_fallback_text(record: Dict[str, Any]) -> str:
+    """
+    Construit un texte de substitution quand le champ content est insuffisant.
+
+    Assemble titre, resume, dates, lieu, ville, region et tags en un texte
+    lisible par l'API Mistral. Utilise quand content < DEFAULT_MIN_TEXT_CHARS.
+
+    Args:
+        record: Document RAG structure (issu de openagenda_culture_france_rag.py).
+
+    Returns:
+        Texte multi-lignes concatenant tous les champs disponibles.
+    """
     title = clean_text(first_non_empty(record, ["title", "title_fr", "name"]))
     summary = clean_text(
         first_non_empty(
@@ -92,6 +152,18 @@ def build_fallback_text(record: Dict[str, Any]) -> str:
 
 
 def normalize_source_url(record: Dict[str, Any]) -> Optional[str]:
+    """
+    Extrait et valide l'URL source d'un document RAG.
+
+    Seules les URLs commencant par http:// ou https:// sont acceptees.
+    Un document sans URL valide est exclu de la vectorisation.
+
+    Args:
+        record: Document RAG structure.
+
+    Returns:
+        URL valide en chaine, ou None si absente ou invalide.
+    """
     url = clean_text(first_non_empty(record, ["source_record_url", "canonicalurl", "url", "shareurl", "html"]))
     if url.startswith(("http://", "https://")):
         return url
@@ -99,6 +171,21 @@ def normalize_source_url(record: Dict[str, Any]) -> Optional[str]:
 
 
 def build_doc_id(record: Dict[str, Any], fallback_index: int) -> str:
+    """
+    Construit un identifiant unique et stable pour un document RAG.
+
+    Strategies par ordre de priorite :
+    1. Champ 'id' existant.
+    2. Champ 'uid' ou 'slug' prefixe du nom du dataset.
+    3. Identifiant genere : 'evenements-publics-openagenda:generated-<index>'.
+
+    Args:
+        record: Document RAG structure.
+        fallback_index: Index numerique utilise si aucun identifiant n'est disponible.
+
+    Returns:
+        Identifiant unique sous forme de chaine.
+    """
     if record.get("id"):
         return clean_text(record["id"])
 
@@ -113,6 +200,23 @@ def prepare_embedding_document(
     fallback_index: int,
     min_text_chars: int = DEFAULT_MIN_TEXT_CHARS,
 ) -> Optional[Dict[str, Any]]:
+    """
+    Prepara un enregistrement RAG pour la vectorisation Mistral.
+
+    Effectue les etapes suivantes :
+    1. Construction de l'identifiant unique.
+    2. Selection du texte (content si assez long, sinon build_fallback_text).
+    3. Rejet des documents sans URL valide ou avec un texte trop court.
+    4. Extraction et structuration des metadonnees.
+
+    Args:
+        record: Document RAG structure (issu de openagenda_culture_france_rag.py).
+        fallback_index: Index de position pour la generation d'ID de secours.
+        min_text_chars: Longueur minimale du texte pour ne pas rejeter le document.
+
+    Returns:
+        Dict {id, text, metadata} pret pour embed_texts(), ou None si rejete.
+    """
     doc_id = build_doc_id(record, fallback_index)
 
     content = clean_text(record.get("content"))
@@ -148,6 +252,16 @@ def prepare_embedding_document(
 
 
 def chunked(items: List[Dict[str, Any]], size: int) -> Iterable[List[Dict[str, Any]]]:
+    """
+    Divise une liste en sous-listes de taille fixe (dernier batch potentiellement plus court).
+
+    Args:
+        items: Liste de documents a decouper.
+        size: Taille maximale de chaque batch.
+
+    Yields:
+        Sous-listes successives de taille <= size.
+    """
     for index in range(0, len(items), size):
         yield items[index:index + size]
 
