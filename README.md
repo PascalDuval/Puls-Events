@@ -1,4 +1,4 @@
-# Pull-Events - Reprise OpenAgenda IDF et pipeline RAG culturel
+# Pull-Events - OpenAgenda IDF et pipeline RAG culturel
 
 ## Presentation
 
@@ -35,7 +35,7 @@ Etat de la base d'artefacts versionnee au 27/04/2026 :
 - Tests pipeline : 41/41 PASS
 - Taille totale des artefacts d'index : 36.00 MB
 
-Validation de non-regression effectuee pendant cette reprise (sur corpus regenere 8014 docs) :
+Validation de non-regression effectuee (sur corpus regenere 8014 docs) :
 
 - `tests/unit`: 23/23 PASS
 - `tests/integration/test_rag_quality_guard.py`: 1/1 PASS
@@ -133,7 +133,7 @@ Les composants les plus importants sont :
 
 ## Procedure inversee (depuis le depot distant)
 
-Cette procedure permet a un nouvel utilisateur de repartir de zero depuis GitHub, d'installer l'environnement puis d'executer le pipeline dans le bon ordre.
+Cette procedure permet a un tout nouvel utilisateur de repartir de zero depuis GitHub, d'installer l'environnement puis d'executer le pipeline dans le bon ordre.
 
 ### 1. Cloner le depot distant
 
@@ -275,7 +275,7 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test
 ### Fichiers principaux a la racine
 
 - `openagenda_culture_france_rag.py` : collecte OpenAgenda, filtrage IDF, fenetre temporelle fixe, normalisation JSONL RAG.
-- `vectorize_events_mistral.py` : preparation de texte, reprise sur fichier existant, generation des embeddings Mistral.
+- `vectorize_events_mistral.py` : preparation de texte, gestion du fichier existant, generation des embeddings Mistral.
 - `index_events_faiss.py` : chargement des embeddings, construction de l'index, sauvegarde des metadonnees et de l'ID mapping.
 - `faiss_searcher.py` : recherche semantique pure et recherche hybride avec filtres metadata.
 - `rag_chatbot_mistral.py` : orchestration embed -> retrieve -> generate.
@@ -359,7 +359,7 @@ Le script `vectorize_events_mistral.py` ajoute un second filet de securite :
 2. normalisation du texte d'entree pour l'embedding,
 3. filtrage des documents trop courts,
 4. validation stricte de la presence d'une URL source,
-5. reprise propre sur fichier vectorise existant,
+5. gestion propre du fichier vectorise existant,
 6. compactage de sortie pour supprimer les doublons ou lignes non pertinentes.
 
 ### Resultat qualite observable
@@ -1352,13 +1352,13 @@ Un fallback automatique sans filtre de tags est en place (`ask()` retry avec `ta
 
 
 
-### Pourquoi ne pas l'implementer dans cette reprise
+### Pourquoi ne pas l'implementer dans ce lot de travaux
 
-Le besoin explicite de cette reprise est de corriger la fenetre de collecte et de documenter la solution sans ouvrir un chantier de modification fonctionnelle plus large. Le chainage temporel chatbot est une amelioration adjacente, utile, mais distincte de la correction de la collecte.
+Le besoin explicite de ce lot de travaux est de corriger la fenetre de collecte et de documenter la solution sans ouvrir un chantier de modification fonctionnelle plus large. Le chainage temporel chatbot est une amelioration adjacente, utile, mais distincte de la correction de la collecte.
 
 ## Conclusion
 
-La reprise est maintenant documentee de bout en bout.
+La solution est maintenant documentee de bout en bout.
 
 Les points a retenir sont les suivants :
 
