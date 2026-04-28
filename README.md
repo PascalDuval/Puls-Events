@@ -1,14 +1,85 @@
 # Pull-Events - OpenAgenda IDF et pipeline RAG culturel
 
+## Demarrage rapide apres clonage
+
+Ce projet s'adresse a un informaticien qui veut cloner, lancer, puis adapter le bot.
+Les informations essentielles sont volontairement au debut.
+
+### 1. Cloner et se placer dans le bon dossier
+
+```bash
+git clone https://github.com/PascalDuval/Puls-Events.git
+cd Puls-Events/Pull-Events
+```
+
+### 2. Installer l'environnement
+
+Option conda (recommandee) :
+
+```bash
+conda create -n LLMRag python=3.10 -y
+conda activate LLMRag
+pip install -r requirements.txt
+```
+
+Option venv :
+
+```bash
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 3. Configurer votre parametrage
+
+Configurer `MISTRAL_API_KEY` (variable d'environnement ou fichier `.env`).
+
+### 4. Executer le pipeline dans l'ordre
+
+```bash
+python openagenda_culture_france_rag.py
+python vectorize_events_mistral.py
+python index_events_faiss.py
+python chatbot_cli.py --question "as-tu un concert de jazz a Paris ?"
+python -m streamlit run PullEventsIDFBot.py
+```
+
+Si les artefacts sont deja presents et coherents dans `data/`, vous pouvez lancer directement Streamlit.
+
+## Adapter le bot a votre cas
+
+### Elargir la fenetre temporelle
+
+Dans `openagenda_culture_france_rag.py`, modifier :
+
+- `WINDOW_START_UTC`
+- `WINDOW_END_UTC`
+
+Ces bornes pilotent la collecte et le filtre de chevauchement de dates.
+
+### Changer les regions recuperees depuis OpenDataSoft
+
+Par defaut, le projet cible l'Ile-de-France via :
+
+- `build_window_where(...)` (clause WHERE sur `location_region`)
+- `IDF_REGION_TERMS` et `IDF_DEPARTMENT_CODES`
+- `is_ile_de_france(...)`
+
+Pour une autre region, adapter ces elements (libelles region + codes departement).
+
+### Limite structurelle de collecte OpenDataSoft
+
+Le script impose `OPENAGENDA_MAX_OFFSET = 10_000` dans `openagenda_culture_france_rag.py`.
+En pratique, vous ne pourrez pas recuperer plus de 10 000 enregistrements via ce mode pagine.
+Pour aller au-dela, il faut changer de strategie (partition par periodes, sous-zones geographiques, ou jeux de donnees separes).
+
 ## Presentation
 
 Ce dossier contient un pipeline RAG complet pour recommander des evenements culturels en Ile-de-France a partir de donnees OpenAgenda, d'embeddings Mistral et d'un index FAISS.
 
-La fenetre temporelle de ces évenements temporels est :
+La fenetre temporelle de ces evenements est :
 - debut de fenetre : 25/04/2025 00:00:00 UTC
 - fin de fenetre : 25/04/2027 23:59:59 UTC
-
-
 
 Le projet couvre toute la chaine technique suivante :
 
