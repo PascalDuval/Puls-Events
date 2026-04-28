@@ -32,12 +32,12 @@ Etat de la base d'artefacts versionnee au 27/04/2026 :
 - Taux d'alignement RAG -> vecteurs : 100%
 - Vecteurs indexes dans FAISS : 8014
 - Dimension embedding : 1024
-- Tests pipeline : 38/38 PASS
-- Taille totale des artefacts d'index : 36.01 MB
+- Tests pipeline : 41/41 PASS
+- Taille totale des artefacts d'index : 36.00 MB
 
 Validation de non-regression effectuee pendant cette reprise (sur corpus regenere 8014 docs) :
 
-- `tests/unit`: 20/20 PASS
+- `tests/unit`: 23/23 PASS
 - `tests/integration/test_rag_quality_guard.py`: 1/1 PASS
 - `tests/integration/test_faiss_indexing.py`: 17/17 PASS
 
@@ -492,31 +492,31 @@ Le code de collecte normalisait `Île-de-France` en `Ile-de-France` a partir de 
 
 ## KPI qualite
 
-### Vue d'ensemble des 38 tests
+### Vue d'ensemble des 41 tests
 
 | Categorie | Tests | Fichier cible | Ce qui est valide |
 | --- | --- | --- | --- |
-| Tests unitaires | 20 | `tests/unit/` | Fonctions isolees, imports, guardrails, parsing temporel |
+| Tests unitaires | 23 | `tests/unit/` | Fonctions isolees, imports, guardrails, parsing temporel |
 | Garde qualite integration | 1 | `test_rag_quality_guard.py` | Corpus RAG complet (8014 docs) vectorisable et coherent |
 | Indexation FAISS integration | 17 | `test_faiss_indexing.py` | Index charge, recherche, performance, coherence |
-| **Total global** | **38** | | **38/38 PASS (100%)** |
+| **Total global** | **41** | | **41/41 PASS (100%)** |
 
 3 warnings de depreciation SWIG observables, non bloquants.
 
 ### Pourquoi cette repartition
 
-- **Tests unitaires (20)** : rapides, sans IO, ciblent une fonction a la fois. Permettent de deboguer rapidement un composant isole.
+- **Tests unitaires (23)** : rapides, sans IO, ciblent une fonction a la fois. Permettent de deboguer rapidement un composant isole.
 - **Garde qualite (1)** : verifie le JSONL avant indexation. Prerequis logique a toute regeneration du corpus.
 - **FAISS integration (17)** : testent l'index reel charge en memoire (31.30 MB). Plus couteux, couvrent la recherche end-to-end et la performance.
 
-### Detail hierarchique des 38 tests
+### Detail hierarchique des 41 tests
 
-**Tests unitaires — 20 tests repartis sur 4 modules**
+**Tests unitaires — 23 tests repartis sur 4 modules**
 
 | Module | Tests | Sujets couverts |
 | --- | --- | --- |
 | `test_imports.py` | 3 | Importabilite langchain, SDK Mistral, faiss-cpu |
-| `test_rag_chatbot_mistral.py` | 5 | Guardrail sans documents, parametres Mistral, format prompt, citation sources |
+| `test_rag_chatbot_mistral.py` | 8 | Guardrails, parametres Mistral, format prompt, citation sources, inference tags |
 | `test_temporal_deixis.py` | 6 | Expressions deictiques : ce week-end, ce soir, demain soir, apres-demain, aucune |
 | `test_vectorize_events_mistral.py` | 6 | Preparation document, rejet URL manquante, vectorisation e2e, cle API |
 
@@ -588,8 +588,8 @@ Le code de collecte normalisait `Île-de-France` en `Ile-de-France` a partir de 
 | Villes couvertes | 493 | Couverture geographique large IDF |
 | Region | 1 (Ile-de-France, normalisee) | Doublons graphiques corriges |
 | Tags uniques | 8486 | Tags libres (vocabulaire non controle) |
-| Docs sans ville | 4 | Qualite tres bonne (0.05%) |
-| Tests PASS | 38/38 | 100% pipeline valide |
+| Docs sans ville | 5 | Qualite tres bonne (0.06%) |
+| Tests PASS | 41/41 | 100% pipeline valide |
 
 ## KPI pipeline et dates
 
@@ -634,12 +634,12 @@ C'est un choix pragmatique et pertinent pour les expositions longues, parcours p
 
 | Artefact | Taille |
 | --- | --- |
-| JSONL RAG | 10.76 MB |
+| JSONL RAG | 10.26 MB |
 | JSONL vecteurs | 192.84 MB |
 | Index FAISS | 31.30 MB |
 | Metadonnees FAISS | 4.36 MB |
-| Mapping ID | 0.35 MB |
-| Taille totale artefacts index | 36.01 MB |
+| Mapping ID | 0.34 MB |
+| Taille totale artefacts index | 36.00 MB |
 
 ## Recherche hybride : principe, metadonnees et choix d'implementation
 
@@ -1096,7 +1096,7 @@ REGLES STRICTES :
   2) N ajoute AUCUN detail, date, lieu ou titre qui ne figure pas explicitement dans le contexte.
   3) Si une information n est pas disponible dans le contexte, ecris "Information non disponible dans les documents."
   4) Ne formule AUCUNE hypothese sur ce qui pourrait exister hors du contexte.
-  5) Cite systematiquement les sources (URL) en fin de reponse pour chaque evenement mentionne.
+  5) Cite explicitement les sources (URL) en fin de reponse pour chaque evenement mentionne.
 ```
 
 **Message utilisateur (dynamique)** :
@@ -1194,7 +1194,7 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull
 | `context_precision` | 0.6238 |
 | `context_recall` | 0.8524 |
 
-### Resultats post-améliorations (3 runs — moyenne ± écart-type)
+### Resultats post-améliorations (3 runs — moyenne ± écart-type, rerun du 28/04/2026)
 
 Commande de reproduction :
 
@@ -1207,26 +1207,26 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull
 
 | Metrique | Moy. | ±std | Min | Max |
 | --- | ---: | ---: | ---: | ---: |
-| `faithfulness` | 0.7381 | 0.0412 | 0.7143 | 0.7857 |
-| `context_utilization` | 0.6034 | 0.0017 | 0.6014 | 0.6044 |
-| `context_precision` | 0.5615 | 0.0296 | 0.5300 | 0.5887 |
-| `context_recall` | 0.7721 | 0.0358 | 0.7381 | 0.8095 |
+| `faithfulness` | 0.9122 | 0.0621 | 0.8571 | 0.9796 |
+| `context_utilization` | 0.7165 | 0.0187 | 0.6950 | 0.7284 |
+| `context_precision` | 0.7130 | 0.0484 | 0.6776 | 0.7681 |
+| `context_recall` | 0.7698 | 0.0576 | 0.7211 | 0.8333 |
 | ~~`answer_relevancy`~~ | *(a implementer)* | | | |
 
 ### Tableau des gains (baseline → post-améliorations)
 
 | Metrique | Baseline | Post-amélio | Delta | % |
 | --- | ---: | ---: | ---: | ---: |
-| `faithfulness` | 0.5932 | **0.7381** | **+0.1449** | **+24.4% ✅** |
-| `context_utilization` | 0.9062 | 0.6034 | -0.3028 | -33.4% ⚠️ |
-| `context_precision` | 0.6238 | 0.5615 | -0.0623 | -10.0% ⚠️ |
-| `context_recall` | 0.8524 | 0.7721 | -0.0803 | -9.4% ⚠️ |
+| `faithfulness` | 0.5932 | **0.9122** | **+0.3190** | **+53.8% ✅** |
+| `context_utilization` | 0.9062 | 0.7165 | -0.1897 | -20.9% ⚠️ |
+| `context_precision` | 0.6238 | 0.7130 | +0.0892 | +14.3% ✅ |
+| `context_recall` | 0.8524 | 0.7698 | -0.0826 | -9.7% ⚠️ |
 
 ### Analyse des résultats
 
-**Gain principal** : `faithfulness` +24.4% — le durcissement du SYSTEM_PROMPT anti-hallucination a sensiblement réduit les affirmations non ancrées dans le contexte.
+**Gain principal** : `faithfulness` +53.8% — le durcissement du SYSTEM_PROMPT anti-hallucination, le reranking et le branchement des filtres ont sensiblement réduit les affirmations non ancrées dans le contexte.
 
-**Important** : les 3 runs ci-dessus ont été mesurés avant le correctif de filtre temporel par chevauchement d'intervalle.
+Les 3 runs ci-dessus correspondent au pipeline courant, après correctif du filtre temporel par chevauchement d'intervalle.
 
 Correctif applique ensuite dans `search_hybrid` :
 
@@ -1235,7 +1235,7 @@ Correctif applique ensuite dans `search_hybrid` :
 
 Ce correctif evite d'exclure a tort les evenements recurrents (date de debut ancienne, date de fin future), et corrige le cas `sortie en famille ce week-end` qui retournait 0 document.
 
-**Note** : la variabilité inter-runs est faible (std ≤ 0.04 pour toutes les métriques), confirmant la stabilité statistique.
+**Note** : la variabilité inter-runs reste moderee (std ≤ 0.07), avec une stabilite particulierement bonne sur `context_utilization`.
 
 ### Limitation technique — answer_relevancy desactivee en version prod
 
@@ -1288,7 +1288,7 @@ Le prompt système a été renforcé avec 5 règles explicites :
 4. Ne formuler aucune hypothèse hors contexte.
 5. Citer les sources (URL) systématiquement.
 
-Impact mesuré : `faithfulness` +24.4% (0.59 → 0.74).
+Impact mesuré : `faithfulness` +53.8% (0.59 → 0.91).
 
 ### 4) Branchement automatique du filtre temporel
 
@@ -1364,7 +1364,7 @@ Les points a retenir sont les suivants :
 
 - la fenetre de collecte source a ete corrigee vers `25/04/2025 -> 25/04/2027`,
 - le corpus a ete regenere sur cette fenetre : 8014 documents RAG, 8014 vecteurs, index FAISS 31.30 MB,
-- la validation technique ne montre aucune regression sur le pipeline existant (38/38 tests PASS),
+- la validation technique ne montre aucune regression sur le pipeline existant (41/41 tests PASS),
 - les artefacts regeneres sont coherents a 100%,
 - la recherche hybride est solide sur les criteres thematiques et geographiques,
 - les reponses chatbot sur festivals d'ete et spectacles locaux sont meilleures sur le corpus elargi,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import inspect
 import re
 from typing import Any, Dict, List, Optional
 import unicodedata
@@ -19,6 +20,15 @@ DEFAULT_TOP_P = 0.9
 DEFAULT_MAX_TOKENS = 600
 DEFAULT_TOP_K = 20
 
+
+def _supports_intent_tags(searcher: Any) -> bool:
+    """Retourne True si search_hybrid accepte intent_tags."""
+    try:
+        signature = inspect.signature(searcher.search_hybrid)
+    except (TypeError, ValueError, AttributeError):
+        return False
+    return "intent_tags" in signature.parameters
+
 SYSTEM_PROMPT = (
     "Tu es un assistant RAG specialise dans les recommandations d'evenements culturels en Ile-de-France. "
     "REGLES STRICTES :"
@@ -26,7 +36,7 @@ SYSTEM_PROMPT = (
     " 2) N'ajoute AUCUN detail, date, lieu ou titre qui ne figure pas explicitement dans le contexte."
     " 3) Si une information n'est pas disponible dans le contexte, ecris 'Information non disponible dans les documents.'"
     " 4) Ne formule AUCUNE hypothese sur ce qui pourrait exister hors du contexte."
-    " 5) Cite systematiquement les sources (URL) en fin de reponse pour chaque evenement mentionne."
+    " 5) Cite explicitement les sources (URL) en fin de reponse pour chaque evenement mentionne."
 )
 
 FALLBACK_OUT_OF_SCOPE = (
@@ -218,29 +228,33 @@ class MistralRAGChatbot:
 
         embedding = self._embed(question)
 
-        docs = self.searcher.search_hybrid(
-            embedding,
-            k=k,
-            city=city,
-            region=region,
-            tags=effective_tags,
-            after_date=after_date,
-            before_date=before_date,
-            intent_tags=effective_tags,
-        )
+        search_kwargs = {
+            "k": k,
+            "city": city,
+            "region": region,
+            "tags": effective_tags,
+            "after_date": after_date,
+            "before_date": before_date,
+        }
+        if _supports_intent_tags(self.searcher):
+            search_kwargs["intent_tags"] = effective_tags
+
+        docs = self.searcher.search_hybrid(embedding, **search_kwargs)
 
         # Si l'inference de tags a ete trop restrictive, fallback sur retrieval sans tags.
         if not docs and inferred_tags and not provided_tags:
-            docs = self.searcher.search_hybrid(
-                embedding,
-                k=k,
-                city=city,
-                region=region,
-                tags=None,
-                after_date=after_date,
-                before_date=before_date,
-                intent_tags=None,
-            )
+            fallback_search_kwargs = {
+                "k": k,
+                "city": city,
+                "region": region,
+                "tags": None,
+                "after_date": after_date,
+                "before_date": before_date,
+            }
+            if _supports_intent_tags(self.searcher):
+                fallback_search_kwargs["intent_tags"] = None
+
+            docs = self.searcher.search_hybrid(embedding, **fallback_search_kwargs)
 
         if not docs:
             return RAGAnswer(
