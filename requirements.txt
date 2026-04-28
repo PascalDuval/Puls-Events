@@ -1,0 +1,7 @@
+langchain==0.3.23
+faiss-cpu==1.10.0
+mistralai==0.4.2
+pytest==8.4.2
+requests==2.32.3
+python-dateutil==2.9.0.post0
+chardet==5.2.0

@@ -1,0 +1,14 @@
+# Archive locale
+old/
+docus/
+private/
+data/*vectors*.jsonl
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environnements / secrets
+.env
+.env.*
+!.env.example
