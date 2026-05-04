@@ -320,6 +320,77 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_faiss_indexing.py -q
 ```
 
+#### Detail des tests unitaires par etape logique (23 tests)
+
+1. Etape 1 - Dependances et imports (3 tests)
+Scripts de test :
+- `tests/unit/test_imports.py`
+
+2. Etape 2 - Parsing temporel (6 tests)
+Scripts de test :
+- `tests/unit/test_temporal_deixis.py`
+
+3. Etape 3 - Preparation des documents (5 tests)
+Scripts de test :
+- `tests/unit/test_vectorize_events_mistral.py`
+
+4. Etape 4 - Guardrails (2 tests)
+Scripts de test :
+- `tests/unit/test_rag_chatbot_mistral.py`
+
+5. Etape 5 - Pipeline RAG (6 tests)
+Scripts de test :
+- `tests/unit/test_rag_chatbot_mistral.py`
+
+6. Etape 6 - Resolution cle API (1 test)
+Scripts de test :
+- `tests/unit/test_vectorize_events_mistral.py`
+
+Verification du total : 3 + 6 + 5 + 2 + 6 + 1 = 23 tests unitaires.
+
+Note de repartition par script :
+- `tests/unit/test_imports.py` : 3 tests
+- `tests/unit/test_temporal_deixis.py` : 6 tests
+- `tests/unit/test_vectorize_events_mistral.py` : 6 tests (dont la resolution de cle API)
+- `tests/unit/test_rag_chatbot_mistral.py` : 8 tests (dont 2 guardrails)
+
+### 6 bis. Benchmark de rapidite d'acces a l'information (chatbot)
+
+Script manuel ajoute :
+- `tests/manual/benchmark_chatbot_performance.py`
+
+Exemple de commande (version sans filtres metadata pour augmenter le hit-rate) :
+
+```bash
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe tests/manual/benchmark_chatbot_performance.py --rounds 3 --k-values 5,10 --warmup 1 --pause-ms 200 --filter-mode relaxed --output-json tests/manual/artifacts/benchmark_chatbot_performance_relaxed.json
+```
+
+Principe du test :
+- `rounds=3` : chaque scenario est execute 3 fois pour lisser les variations de latence.
+- `warmup=1` : une requete de chauffe est faite avant les mesures, pour eviter qu'un premier appel froid (chargement/initialisation) ne biaise les stats.
+- `k=5,10` : on compare deux profondeurs de retrieval (nombre de documents recuperes).
+- `filter-mode=relaxed` : retire temporairement les filtres stricts (ville/region/tags) pour mesurer la perf quand le retriever retrouve effectivement des documents.
+- `p95` : 95e percentile de latence. Cela signifie que 95% des requetes sont plus rapides que cette valeur, et 5% plus lentes.
+
+Requetes en langage naturel utilisees dans ce benchmark (3 scenarios metier) :
+1. `Peux-tu me proposer des concerts de jazz en Ile-de-France ?`
+2. `Je cherche des expositions photo interessantes en Ile-de-France.`
+3. `Quelles sorties culturelles pour une famille me recommandes-tu en Ile-de-France ?`
+
+Un 4e scenario volontairement large est conserve pour valider le guardrail :
+- `Donne-moi tous les evenements culturels disponibles en Ile-de-France.`
+
+Resultats recents (mode `relaxed`, 3 rounds, warmup 1, k=5 et 10) :
+- Global latency moyenne : 2938.65 ms
+- Global latency mediane : 3870.30 ms
+- p95 : 4483.05 ms
+- Global hit-rate docs>0 : 85.7%
+
+Pourquoi `avg_docs_retrieved` pouvait etre a 0 avant :
+- la combinaison de filtres stricts (ville + tags + fenetre temporelle deictique) peut eliminer tous les candidats,
+- certaines requetes (ex. "ce week-end") activent un filtre date automatique, parfois trop restrictif selon la base,
+- en mode `relaxed`, on desactive temporairement ces filtres pour verifier que le retrieval fonctionne bien.
+
 ### 7. Interroger le chatbot
 
 ```bash

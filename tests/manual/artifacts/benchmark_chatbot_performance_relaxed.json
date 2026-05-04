@@ -1,0 +1,197 @@
+{
+  "rounds": 3,
+  "warmup": 1,
+  "k_values": [
+    5,
+    10
+  ],
+  "filter_mode": "relaxed",
+  "scenario_count": 7,
+  "global_latency": {
+    "count": 21.0,
+    "min_ms": 0.10399999882793054,
+    "max_ms": 4733.134299996891,
+    "mean_ms": 2938.650590476235,
+    "median_ms": 3870.2984000010474,
+    "stdev_ms": 1593.6178577726635,
+    "p95_ms": 4483.053700001619
+  },
+  "global_hit_rate_docs_gt0": 0.8571428571428571,
+  "scenarios": [
+    {
+      "scenario": "concert_jazz_idf_k5",
+      "question": "Peux-tu me proposer des concerts de jazz en Ile-de-France ?",
+      "params": {
+        "k": 5,
+        "city": null,
+        "region": null,
+        "tags": null,
+        "after_date": null,
+        "before_date": null
+      },
+      "latency": {
+        "count": 3.0,
+        "min_ms": 4170.540700000856,
+        "max_ms": 4410.885699999199,
+        "mean_ms": 4315.7426333333815,
+        "median_ms": 4365.801500000089,
+        "stdev_ms": 127.7530718026662,
+        "p95_ms": 4410.885699999199
+      },
+      "avg_docs_retrieved": 5,
+      "hit_rate_docs_gt0": 1.0,
+      "avg_answer_length": 1545.3333333333333,
+      "errors": []
+    },
+    {
+      "scenario": "expo_photo_idf_k5",
+      "question": "Je cherche des expositions photo interessantes en Ile-de-France.",
+      "params": {
+        "k": 5,
+        "city": null,
+        "region": null,
+        "tags": null,
+        "after_date": null,
+        "before_date": null
+      },
+      "latency": {
+        "count": 3.0,
+        "min_ms": 3595.3234000007797,
+        "max_ms": 4483.053700001619,
+        "mean_ms": 4047.5828666676534,
+        "median_ms": 4064.3715000005614,
+        "stdev_ms": 444.10321440154576,
+        "p95_ms": 4483.053700001619
+      },
+      "avg_docs_retrieved": 5,
+      "hit_rate_docs_gt0": 1.0,
+      "avg_answer_length": 1637.3333333333333,
+      "errors": []
+    },
+    {
+      "scenario": "sorties_famille_idf_k5",
+      "question": "Quelles sorties culturelles pour une famille me recommandes-tu en Ile-de-France ?",
+      "params": {
+        "k": 5,
+        "city": null,
+        "region": null,
+        "tags": null,
+        "after_date": null,
+        "before_date": null
+      },
+      "latency": {
+        "count": 3.0,
+        "min_ms": 1882.0449000013468,
+        "max_ms": 2143.884599998273,
+        "mean_ms": 1977.879066666598,
+        "median_ms": 1907.7077000001736,
+        "stdev_ms": 144.33649104954512,
+        "p95_ms": 2143.884599998273
+      },
+      "avg_docs_retrieved": 1,
+      "hit_rate_docs_gt0": 1.0,
+      "avg_answer_length": 583.6666666666666,
+      "errors": []
+    },
+    {
+      "scenario": "concert_jazz_idf_k10",
+      "question": "Peux-tu me proposer des concerts de jazz en Ile-de-France ?",
+      "params": {
+        "k": 10,
+        "city": null,
+        "region": null,
+        "tags": null,
+        "after_date": null,
+        "before_date": null
+      },
+      "latency": {
+        "count": 3.0,
+        "min_ms": 3927.582699998311,
+        "max_ms": 4733.134299996891,
+        "mean_ms": 4263.5020999975195,
+        "median_ms": 4129.789299997356,
+        "stdev_ms": 419.0914932660658,
+        "p95_ms": 4733.134299996891
+      },
+      "avg_docs_retrieved": 10,
+      "hit_rate_docs_gt0": 1.0,
+      "avg_answer_length": 1739.6666666666667,
+      "errors": []
+    },
+    {
+      "scenario": "expo_photo_idf_k10",
+      "question": "Je cherche des expositions photo interessantes en Ile-de-France.",
+      "params": {
+        "k": 10,
+        "city": null,
+        "region": null,
+        "tags": null,
+        "after_date": null,
+        "before_date": null
+      },
+      "latency": {
+        "count": 3.0,
+        "min_ms": 3870.2984000010474,
+        "max_ms": 4164.9776000012935,
+        "mean_ms": 4028.1412666663527,
+        "median_ms": 4049.1477999967174,
+        "stdev_ms": 148.45845735462848,
+        "p95_ms": 4164.9776000012935
+      },
+      "avg_docs_retrieved": 7,
+      "hit_rate_docs_gt0": 1.0,
+      "avg_answer_length": 1764.6666666666667,
+      "errors": []
+    },
+    {
+      "scenario": "sorties_famille_idf_k10",
+      "question": "Quelles sorties culturelles pour une famille me recommandes-tu en Ile-de-France ?",
+      "params": {
+        "k": 10,
+        "city": null,
+        "region": null,
+        "tags": null,
+        "after_date": null,
+        "before_date": null
+      },
+      "latency": {
+        "count": 3.0,
+        "min_ms": 1816.5118000033544,
+        "max_ms": 2099.8609000016586,
+        "mean_ms": 1937.588300001759,
+        "median_ms": 1896.392200000264,
+        "stdev_ms": 146.09762869041415,
+        "p95_ms": 2099.8609000016586
+      },
+      "avg_docs_retrieved": 1,
+      "hit_rate_docs_gt0": 1.0,
+      "avg_answer_length": 566.6666666666666,
+      "errors": []
+    },
+    {
+      "scenario": "broad_query_guardrail",
+      "question": "Donne-moi tous les evenements culturels disponibles en Ile-de-France.",
+      "params": {
+        "k": 10,
+        "city": null,
+        "region": null,
+        "tags": null,
+        "after_date": null,
+        "before_date": null
+      },
+      "latency": {
+        "count": 3.0,
+        "min_ms": 0.10399999882793054,
+        "max_ms": 0.1416000013705343,
+        "mean_ms": 0.11790000038066258,
+        "median_ms": 0.1081000009435229,
+        "stdev_ms": 0.02062692511080859,
+        "p95_ms": 0.1416000013705343
+      },
+      "avg_docs_retrieved": 0,
+      "hit_rate_docs_gt0": 0.0,
+      "avg_answer_length": 322,
+      "errors": []
+    }
+  ]
+}
