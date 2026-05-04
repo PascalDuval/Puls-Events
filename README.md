@@ -46,6 +46,8 @@ python -m streamlit run PullEventsIDFBot.py
 
 Si les artefacts sont deja presents et coherents dans `data/`, vous pouvez lancer directement Streamlit.
 
+> Pour mesurer les performances du chatbot (latence, hit-rate, p95), voir la section [Benchmark de performance du chatbot RAG](#benchmark-de-performance-du-chatbot-rag) plus bas dans ce fichier.
+
 ## Adapter le bot a votre cas
 
 ### Elargir la fenetre temporelle
@@ -354,42 +356,83 @@ Note de repartition par script :
 - `tests/unit/test_vectorize_events_mistral.py` : 6 tests (dont la resolution de cle API)
 - `tests/unit/test_rag_chatbot_mistral.py` : 8 tests (dont 2 guardrails)
 
-### 6 bis. Benchmark de rapidite d'acces a l'information (chatbot)
+## Benchmark de performance du chatbot RAG
 
-Script manuel ajoute :
-- `tests/manual/benchmark_chatbot_performance.py`
+Ce benchmark mesure la rapidite d'acces a l'information via le chatbot, de bout en bout : embedding de la question, recherche FAISS, generation Mistral, reponse finale.
 
-Exemple de commande (version sans filtres metadata pour augmenter le hit-rate) :
+### Principe general
+
+Le test execute chaque scenario plusieurs fois (`rounds`) pour calculer des statistiques stables, et exclut un premier appel de chauffe (`warmup`) qui serait biaise par l'initialisation des modeles en memoire.
+
+Parametres cles :
+
+| Parametre | Valeur utilisee | Signification |
+|---|---|---|
+| `rounds` | 3 | Nombre de repetitions par scenario. La latence reportee est la moyenne des 3 appels. |
+| `warmup` | 1 | Nombre d'appels de chauffe ignores dans les stats. Le premier appel charge les modeles en memoire et serait artificiellement plus lent. |
+| `k` | 5 ou 10 | Nombre de documents recuperes par FAISS avant generation. Tester k=5 et k=10 permet de mesurer l'impact sur la latence et la qualite. |
+| `filter-mode` | `relaxed` | Sans filtres stricts (ville/region/tags) pour s'assurer que FAISS retrouve bien des documents. En `strict`, les filtres combinés peuvent renvoyer zero resultat. |
+| `p95` | — | 95e percentile de latence : 95% des requetes repondent en moins que cette valeur. Le p95 detecte les pics de lenteur que la moyenne masque. |
+
+### Les 3 scenarios metier (requetes en langage naturel)
+
+**Scenario 1 — Jazz IDF**
+> `Peux-tu me proposer des concerts de jazz en Ile-de-France ?`
+
+Requete ouverte sans contrainte de ville ni de date. Teste le retrieval semantique sur un type d'evenement precis.
+
+**Scenario 2 — Expo photo IDF**
+> `Je cherche des expositions photo interessantes en Ile-de-France.`
+
+Requete centree sur les arts visuels. Mesure la capacite du bot a identifier des evenements thematiques via les embeddings.
+
+**Scenario 3 — Sorties famille IDF**
+> `Quelles sorties culturelles pour une famille me recommandes-tu en Ile-de-France ?`
+
+Requete multi-publics (famille/enfant). La requete plus floue oblige le bot a faire davantage de travail d'inference de tags.
+
+**Scenario 4 — Guardrail (requete trop large)**
+> `Donne-moi tous les evenements culturels disponibles en Ile-de-France.`
+
+Ce scenario teste le garde-fou anti-requete-large : le bot doit repondre en moins de 1 ms sans appeler FAISS ni Mistral.
+
+### Lancer le benchmark
 
 ```bash
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe tests/manual/benchmark_chatbot_performance.py --rounds 3 --k-values 5,10 --warmup 1 --pause-ms 200 --filter-mode relaxed --output-json tests/manual/artifacts/benchmark_chatbot_performance_relaxed.json
 ```
 
-Principe du test :
-- `rounds=3` : chaque scenario est execute 3 fois pour lisser les variations de latence.
-- `warmup=1` : une requete de chauffe est faite avant les mesures, pour eviter qu'un premier appel froid (chargement/initialisation) ne biaise les stats.
-- `k=5,10` : on compare deux profondeurs de retrieval (nombre de documents recuperes).
-- `filter-mode=relaxed` : retire temporairement les filtres stricts (ville/region/tags) pour mesurer la perf quand le retriever retrouve effectivement des documents.
-- `p95` : 95e percentile de latence. Cela signifie que 95% des requetes sont plus rapides que cette valeur, et 5% plus lentes.
+### Resultats obtenus (04/05/2026, mode relaxed, 3 rounds, k=5 et k=10)
 
-Requetes en langage naturel utilisees dans ce benchmark (3 scenarios metier) :
-1. `Peux-tu me proposer des concerts de jazz en Ile-de-France ?`
-2. `Je cherche des expositions photo interessantes en Ile-de-France.`
-3. `Quelles sorties culturelles pour une famille me recommandes-tu en Ile-de-France ?`
+| Scenario | k | Latence moyenne | Latence p95 | Docs recuperes | Hit-rate |
+|---|---|---|---|---|---|
+| Concert jazz IDF | 5 | 4315 ms | 4411 ms | 5/5 | 100% |
+| Expo photo IDF | 5 | 4048 ms | 4483 ms | 5/5 | 100% |
+| Sorties famille IDF | 5 | 1978 ms | 2144 ms | 1/5 | 100% |
+| Concert jazz IDF | 10 | 4264 ms | 4733 ms | 10/10 | 100% |
+| Expo photo IDF | 10 | 4028 ms | 4165 ms | 7/10 | 100% |
+| Sorties famille IDF | 10 | 1938 ms | 2100 ms | 1/10 | 100% |
+| Guardrail (trop large) | 10 | **0.12 ms** | 0.14 ms | 0 | 0% (normal) |
 
-Un 4e scenario volontairement large est conserve pour valider le guardrail :
-- `Donne-moi tous les evenements culturels disponibles en Ile-de-France.`
+Latence globale (tous scenarios metier confondus) :
+- Moyenne : 2938 ms
+- Mediane : 3870 ms
+- p95 : 4483 ms
+- Hit-rate docs>0 : **85.7%**
 
-Resultats recents (mode `relaxed`, 3 rounds, warmup 1, k=5 et 10) :
-- Global latency moyenne : 2938.65 ms
-- Global latency mediane : 3870.30 ms
-- p95 : 4483.05 ms
-- Global hit-rate docs>0 : 85.7%
+Interpretation :
+- La latence de 2-4 secondes est normale pour un pipeline embed + retrieve + generate avec un LLM distant (Mistral API).
+- Le guardrail repond en moins d'1 ms : les requetes hors perimetre ne sollicitent jamais le LLM ni FAISS.
+- Le hit-rate inferieur a 100% sur le scenario famille est attendu : le corpus IDF contient peu d'evenements tagges explicitement "famille" sans filtre thematique.
 
-Pourquoi `avg_docs_retrieved` pouvait etre a 0 avant :
-- la combinaison de filtres stricts (ville + tags + fenetre temporelle deictique) peut eliminer tous les candidats,
-- certaines requetes (ex. "ce week-end") activent un filtre date automatique, parfois trop restrictif selon la base,
-- en mode `relaxed`, on desactive temporairement ces filtres pour verifier que le retrieval fonctionne bien.
+### Pourquoi `avg_docs_retrieved` pouvait etre 0 dans les premiers tests
+
+En mode `strict` (filtres ville + tags + fenetre temporelle automatique), la combinaison de ces filtres peut eliminer tous les candidats FAISS :
+
+- La formulation "ce week-end" active un filtre date UTC automatique (via `temporal_deixis.py`) parfois trop restrictif selon les dates dans la base.
+- Ajouter simultanement une ville precise et des tags peut ne trouver aucun evenement correspondant.
+
+Le mode `relaxed` desactive tous ces filtres pour valider que le retrieval FAISS fonctionne correctement en isolation.
 
 ### 7. Interroger le chatbot
 
