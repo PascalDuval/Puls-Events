@@ -1,8 +1,8 @@
 # Pull-Events - OpenAgenda IDF et pipeline RAG culturel
 
-## Demarrage rapide apres clonage
+## Démarrage rapide après clonage
 
-Ce projet s'adresse a un informaticien qui veut cloner, lancer, puis adapter le bot.
+Ce projet s'adresse à un informaticien qui veut cloner, lancer, puis adapter le bot.
 Les informations essentielles sont volontairement au debut.
 
 ### 1. Cloner et se placer dans le bon dossier
@@ -14,7 +14,7 @@ cd Puls-Events/Pull-Events
 
 ### 2. Installer l'environnement
 
-Option conda (recommandee) :
+Option conda (recommandée) :
 
 ```bash
 conda create -n LLMRag python=3.10 -y
@@ -30,11 +30,11 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 3. Configurer votre parametrage
+### 3. Configurer votre paramétrage
 
 Configurer `MISTRAL_API_KEY` (variable d'environnement ou fichier `.env`).
 
-### 4. Executer le pipeline dans l'ordre
+### 4. Exécuter le pipeline dans l'ordre
 
 ```bash
 python openagenda_culture_france_rag.py
@@ -44,13 +44,13 @@ python chatbot_cli.py --question "as-tu un concert de jazz a Paris ?"
 python -m streamlit run PullEventsIDFBot.py
 ```
 
-Si les artefacts sont deja presents et coherents dans `data/`, vous pouvez lancer directement Streamlit.
+Si les artefacts sont déjà présents et cohérents dans `data/`, vous pouvez lancer directement Streamlit.
 
 > Pour mesurer les performances du chatbot (latence, hit-rate, p95), voir la section [Benchmark de performance du chatbot RAG](#benchmark-de-performance-du-chatbot-rag) plus bas dans ce fichier.
 
-## Adapter le bot a votre cas
+## Adapter le bot à votre cas
 
-### Elargir la fenetre temporelle
+### Élargir la fenêtre temporelle
 
 Dans `openagenda_culture_france_rag.py`, modifier :
 
@@ -59,45 +59,45 @@ Dans `openagenda_culture_france_rag.py`, modifier :
 
 Ces bornes pilotent la collecte et le filtre de chevauchement de dates.
 
-### Changer les regions recuperees depuis OpenDataSoft
+### Changer les regions récupérées depuis OpenDataSoft
 
-Par defaut, le projet cible l'Ile-de-France via :
+Par défaut, le projet cible l'Ile-de-France via :
 
 - `build_window_where(...)` (clause WHERE sur `location_region`)
 - `IDF_REGION_TERMS` et `IDF_DEPARTMENT_CODES`
 - `is_ile_de_france(...)`
 
-Pour une autre region, adapter ces elements (libelles region + codes departement).
+Pour une autre region, adapter ces éléments (libelles region + codes departement).
 
 ### Limite structurelle de collecte OpenDataSoft
 
 Le script impose `OPENAGENDA_MAX_OFFSET = 10_000` dans `openagenda_culture_france_rag.py`.
-En pratique, vous ne pourrez pas recuperer plus de 10 000 enregistrements via ce mode pagine.
-Pour aller au-dela, il faut changer de strategie (partition par periodes, sous-zones geographiques, ou jeux de donnees separes).
+En pratique, vous ne pourrez pas récupérer plus de 10 000 enregistrements via ce mode pagine.
+Pour aller au-dela, il faut changer de stratégie (partition par périodes, sous-zones géographiques, ou jeux de données separes).
 
-## Presentation
+## Présentation
 
-Ce dossier contient un pipeline RAG complet pour recommander des evenements culturels en Ile-de-France a partir de donnees OpenAgenda, d'embeddings Mistral et d'un index FAISS.
+Ce dossier contient un pipeline RAG complet pour recommander des événements culturels en Ile-de-France a partir de données OpenAgenda, d'embeddings Mistral et d'un index FAISS.
 
-La fenetre temporelle de ces evenements est :
-- debut de fenetre : 25/04/2025 00:00:00 UTC
-- fin de fenetre : 25/04/2027 23:59:59 UTC
+La fenêtre temporelle de ces événements est :
+- debut de fenêtre : 25/04/2025 00:00:00 UTC
+- fin de fenêtre : 25/04/2027 23:59:59 UTC
 
 Le projet couvre toute la chaine technique suivante :
 
 1. collecte OpenAgenda,
 2. nettoyage et normalisation des enregistrements,
-3. generation d'un corpus JSONL RAG,
+3. génération d'un corpus JSONL RAG,
 4. vectorisation des documents,
 5. construction et validation d'un index FAISS,
-6. recherche hybride vecteur + metadonnees,
-7. reponse chatbot guidee par les documents recuperes.
+6. recherche hybride vecteur + métadonnées,
+7. réponse chatbot guidee par les documents récupérés.
 
 
 
-## Resume executif
+## Résumé executif
 
-Etat de la base d'artefacts versionnee au 27/04/2026 :
+État de la base d'artefacts versionnee au 27/04/2026 :
 
 - Documents RAG : 8014
 - Lignes du fichier de vecteurs : 8014
@@ -108,7 +108,7 @@ Etat de la base d'artefacts versionnee au 27/04/2026 :
 - Tests pipeline : 41/41 PASS
 - Taille totale des artefacts d'index : 36.00 MB
 
-Validation de non-regression effectuee (sur corpus regenere 8014 docs) :
+Validation de non-regression effectuee (sur corpus régénéré 8014 docs) :
 
 - `tests/unit`: 23/23 PASS
 - `tests/integration/test_rag_quality_guard.py`: 1/1 PASS
@@ -116,29 +116,29 @@ Validation de non-regression effectuee (sur corpus regenere 8014 docs) :
 
 ## Journal du pipeline
 
-### Etape 1 - Localisation du point de controle
+### Étape 1 - Localisation du point de controle
 
-Le point de controle de la fenetre temporelle se trouve dans `openagenda_culture_france_rag.py` via deux constantes :
+Le point de controle de la fenêtre temporelle se trouve dans `openagenda_culture_france_rag.py` via deux constantes :
 
 - `WINDOW_START_UTC`
 - `WINDOW_END_UTC`
 
-### Etape 2 - Correction de la fenetre
+### Étape 2 - Correction de la fenêtre
 
 La correction appliquee dans le code source est minimale et ciblee :
 
 - borne basse passee de `2026-04-25` a `2025-04-25`,
 - borne haute conservee a `2027-04-25`,
-- commentaire de garde d'integration aligne sur la meme fenetre.
+- commentaire de garde d'intégration aligne sur la meme fenêtre.
 
-### Etape 3 - Validation ciblee immediate
+### Étape 3 - Validation ciblee immediate
 
-Verification executee juste apres la modification de code :
+Vérification executee juste après la modification de code :
 
 - `pytest tests/integration/test_rag_quality_guard.py -q`
-- resultat : `1 passed`
+- résultat : `1 passed`
 
-### Etape 4 - Verification pipeline complete
+### Étape 4 - Vérification pipeline complete
 
 La suite de tests effectivement utilisee comme pipeline a ensuite ete rejouee :
 
@@ -146,13 +146,13 @@ La suite de tests effectivement utilisee comme pipeline a ensuite ete rejouee :
 - `pytest tests/integration/test_rag_quality_guard.py -q`
 - `pytest tests/integration/test_faiss_indexing.py -q`
 
-Resultat consolide :
+Résultat consolide :
 
 - 38 tests passes sur 38
 - 3 warnings de depreciation SWIG observables sur les suites qui manipulent FAISS
 - warnings non bloquants et sans impact fonctionnel sur la recherche ou l'indexation
 
-### Etape 5 - Relecture des artefacts et mise a jour de la documentation
+### Étape 5 - Relecture des artefacts et mise a jour de la documentation
 
 Les artefacts versionnes ont ete reanalyses pour produire un README complet contenant :
 
@@ -161,22 +161,22 @@ Les artefacts versionnes ont ete reanalyses pour produire un README complet cont
 - KPI,
 - validation des index,
 - benchmark FAISS,
-- bilan des reponses chatbot,
+- bilan des réponses chatbot,
 - proposition d'amelioration de la recherche temporelle sans implementation immediate.
 
-## Gestion des dependances
+## Gestion des dépendances
 
-Deux options sont documentees ci-dessous. L'option recommandee sur ce workspace reste conda.
+Deux options sont documentees ci-dessous. L'option recommandée sur ce workspace reste conda.
 
-### Option recommandee : conda
+### Option recommandée : conda
 
-Interpreteur recommande pour ce projet :
+Interpreteur recommandé pour ce projet :
 
 ```bash
 conda activate LLMRag
 ```
 
-Puis installation des dependances Python du projet :
+Puis installation des dépendances Python du projet :
 
 ```bash
 pip install -r Pull-Events/requirements.txt
@@ -184,40 +184,40 @@ pip install -r Pull-Events/requirements.txt
 
 ### Option alternative : pip pur
 
-Si vous utilisez deja un environnement virtuel actif :
+Si vous utilisez déjà un environnement virtuel actif :
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -r Pull-Events/requirements.txt
 ```
 
-### Dependances critiques du pipeline
+### Dépendances critiques du pipeline
 
 Les composants les plus importants sont :
 
 - `requests` pour la collecte OpenAgenda,
 - `python-dateutil` pour le parsing robuste des dates,
-- `mistralai` pour les embeddings et la generation,
+- `mistralai` pour les embeddings et la génération,
 - `faiss-cpu` pour l'index vectoriel,
 - `numpy` pour la manipulation des embeddings,
 - `pytest` pour la validation.
 
 ## Instructions de reproduction
 
-## Procedure inversee (depuis le depot distant)
+## Procedure inversee (depuis le dépôt distant)
 
-Cette procedure permet a un tout nouvel utilisateur de repartir de zero depuis GitHub, d'installer l'environnement puis d'executer le pipeline dans le bon ordre.
+Cette procedure permet a un tout nouvel utilisateur de repartir de zero depuis GitHub, d'installer l'environnement puis d'exécuter le pipeline dans le bon ordre.
 
-### 1. Cloner le depot distant
+### 1. Cloner le dépôt distant
 
 ```bash
 git clone https://github.com/PascalDuval/Puls-Events.git
 cd Puls-Events/Pull-Events
 ```
 
-### 2. Creer et activer l'environnement
+### 2. Créer et activer l'environnement
 
-Option conda (recommandee) :
+Option conda (recommandée) :
 
 ```bash
 conda create -n LLMRag python=3.10 -y
@@ -234,15 +234,15 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 3. Definir la cle API Mistral
+### 3. Definir la clé API Mistral
 
 Configurer `MISTRAL_API_KEY` dans l'environnement (ou via un fichier `.env` compatible avec vos scripts).
 
 ### 4. Lancer les scripts dans l'ordre (adaptation possible)
 
-1. `openagenda_culture_france_rag.py` : collecte OpenAgenda + generation du corpus RAG JSONL.
+1. `openagenda_culture_france_rag.py` : collecte OpenAgenda + génération du corpus RAG JSONL.
 2. `vectorize_events_mistral.py` : creation des embeddings Mistral a partir du corpus.
-3. `index_events_faiss.py` : construction de l'index FAISS + metadonnees associees.
+3. `index_events_faiss.py` : construction de l'index FAISS + métadonnées associées.
 4. `chatbot_cli.py` (optionnel) : validation rapide en ligne de commande.
 5. `PullEventsIDFBot.py` via Streamlit : interface utilisateur finale.
 
@@ -258,13 +258,13 @@ python -m streamlit run PullEventsIDFBot.py
 
 ### 5. Choix rapide : lancer directement Streamlit
 
-Si les artefacts (`data/evenements_..._rag.jsonl`, `data/evenements_..._vectors.jsonl`, `data/faiss_index.idx` et fichiers metadata) sont deja presents et coherents, vous pouvez lancer directement :
+Si les artefacts (`data/evenements_..._rag.jsonl`, `data/evenements_..._vectors.jsonl`, `data/faiss_index.idx` et fichiers metadata) sont déjà présents et cohérents, vous pouvez lancer directement :
 
 ```bash
 python -m streamlit run PullEventsIDFBot.py
 ```
 
-Les commandes ci-dessous sont celles a executer depuis le dossier `Pull-Events/`.
+Les commandes ci-dessous sont celles a exécuter depuis le dossier `Pull-Events/`.
 
 ### 1. Activer l'environnement
 
@@ -272,13 +272,13 @@ Les commandes ci-dessous sont celles a executer depuis le dossier `Pull-Events/`
 conda activate LLMRag
 ```
 
-### 2. Installer les dependances
+### 2. Installer les dépendances
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. (Re)generer le corpus RAG OpenAgenda
+### 3. (Re)générer le corpus RAG OpenAgenda
 
 ```bash
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe openagenda_culture_france_rag.py
@@ -296,7 +296,7 @@ Si vous disposez d'un fichier `.env` contenant `MISTRAL_API_KEY` :
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe vectorize_events_mistral.py --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env"
 ```
 
-Sinon, vous pouvez fournir la cle directement par variable d'environnement ou argument CLI selon votre mode d'execution.
+Sinon, vous pouvez fournir la clé directement par variable d'environnement ou argument CLI selon votre mode d'exécution.
 
 Sortie attendue :
 
@@ -308,13 +308,13 @@ Sortie attendue :
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe index_events_faiss.py
 ```
 
-Artefacts generes :
+Artefacts générés :
 
 - `data/faiss_index.idx`
 - `data/faiss_metadata.pkl`
 - `data/faiss_id_mapping.pkl`
 
-### 6. Executer les tests
+### 6. Exécuter les tests
 
 ```bash
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/unit -q
@@ -322,79 +322,79 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_faiss_indexing.py -q
 ```
 
-#### Detail des tests unitaires par etape logique (23 tests)
+#### Détail des tests unitaires par étape logique (23 tests)
 
-1. Etape 1 - Dependances et imports (3 tests)
+1. Étape 1 - Dépendances et imports (3 tests)
 Scripts de test :
 - `tests/unit/test_imports.py`
 
-2. Etape 2 - Parsing temporel (6 tests)
+2. Étape 2 - Parsing temporel (6 tests)
 Scripts de test :
 - `tests/unit/test_temporal_deixis.py`
 
-3. Etape 3 - Preparation des documents (5 tests)
+3. Étape 3 - Preparation des documents (5 tests)
 Scripts de test :
 - `tests/unit/test_vectorize_events_mistral.py`
 
-4. Etape 4 - Guardrails (2 tests)
+4. Étape 4 - Guardrails (2 tests)
 Scripts de test :
 - `tests/unit/test_rag_chatbot_mistral.py`
 
-5. Etape 5 - Pipeline RAG (6 tests)
+5. Étape 5 - Pipeline RAG (6 tests)
 Scripts de test :
 - `tests/unit/test_rag_chatbot_mistral.py`
 
-6. Etape 6 - Resolution cle API (1 test)
+6. Étape 6 - Résolution clé API (1 test)
 Scripts de test :
 - `tests/unit/test_vectorize_events_mistral.py`
 
-Verification du total : 3 + 6 + 5 + 2 + 6 + 1 = 23 tests unitaires.
+Vérification du total : 3 + 6 + 5 + 2 + 6 + 1 = 23 tests unitaires.
 
-Note de repartition par script :
+Note de répartition par script :
 - `tests/unit/test_imports.py` : 3 tests
 - `tests/unit/test_temporal_deixis.py` : 6 tests
-- `tests/unit/test_vectorize_events_mistral.py` : 6 tests (dont la resolution de cle API)
+- `tests/unit/test_vectorize_events_mistral.py` : 6 tests (dont la résolution de clé API)
 - `tests/unit/test_rag_chatbot_mistral.py` : 8 tests (dont 2 guardrails)
 
 ## Benchmark de performance du chatbot RAG
 
-Ce benchmark mesure la rapidite d'acces a l'information via le chatbot, de bout en bout : embedding de la question, recherche FAISS, generation Mistral, reponse finale.
+Ce benchmark mesure la rapidite d'acces a l'information via le chatbot, de bout en bout : embedding de la question, recherche FAISS, génération Mistral, réponse finale.
 
 ### Principe general
 
-Le test execute chaque scenario plusieurs fois (`rounds`) pour calculer des statistiques stables, et exclut un premier appel de chauffe (`warmup`) qui serait biaise par l'initialisation des modeles en memoire.
+Le test execute chaque scenario plusieurs fois (`rounds`) pour calculer des statistiques stables, et exclut un premier appel de chauffe (`warmup`) qui serait biaisé par l'initialisation des modèles en mémoire.
 
-Parametres cles :
+Paramètres clés :
 
-| Parametre | Valeur utilisee | Signification |
+| Paramètre | Valeur utilisee | Signification |
 |---|---|---|
-| `rounds` | 3 | Nombre de repetitions par scenario. La latence reportee est la moyenne des 3 appels. |
-| `warmup` | 1 | Nombre d'appels de chauffe ignores dans les stats. Le premier appel charge les modeles en memoire et serait artificiellement plus lent. |
-| `k` | 5 ou 10 | Nombre de documents recuperes par FAISS avant generation. Tester k=5 et k=10 permet de mesurer l'impact sur la latence et la qualite. |
-| `filter-mode` | `relaxed` | Sans filtres stricts (ville/region/tags) pour s'assurer que FAISS retrouve bien des documents. En `strict`, les filtres combinés peuvent renvoyer zero resultat. |
-| `p95` | — | 95e percentile de latence : 95% des requetes repondent en moins que cette valeur. Le p95 detecte les pics de lenteur que la moyenne masque. |
+| `rounds` | 3 | Nombre de répétitions par scenario. La latence reportee est la moyenne des 3 appels. |
+| `warmup` | 1 | Nombre d'appels de chauffe ignores dans les stats. Le premier appel charge les modèles en mémoire et serait artificiellement plus lent. |
+| `k` | 5 ou 10 | Nombre de documents récupérés par FAISS avant génération. Tester k=5 et k=10 permet de mesurer l'impact sur la latence et la qualité. |
+| `filter-mode` | `relaxed` | Sans filtres stricts (ville/region/tags) pour s'assurer que FAISS retrouve bien des documents. En `strict`, les filtres combinés peuvent renvoyer zero résultat. |
+| `p95` | — | 95e percentile de latence : 95% des requêtes repondent en moins que cette valeur. Le p95 détecté les pics de lenteur que la moyenne masque. |
 
-### Les 3 scenarios metier (requetes en langage naturel)
+### Les 3 scenarios métier (requêtes en langage naturel)
 
 **Scenario 1 — Jazz IDF**
 > `Peux-tu me proposer des concerts de jazz en Ile-de-France ?`
 
-Requete ouverte sans contrainte de ville ni de date. Teste le retrieval semantique sur un type d'evenement precis.
+Requête ouverte sans contrainte de ville ni de date. Teste le retrieval sémantique sur un type d'événement precis.
 
 **Scenario 2 — Expo photo IDF**
 > `Je cherche des expositions photo interessantes en Ile-de-France.`
 
-Requete centree sur les arts visuels. Mesure la capacite du bot a identifier des evenements thematiques via les embeddings.
+Requête centree sur les arts visuels. Mesure la capacité du bot a identifier des événements thematiques via les embeddings.
 
 **Scenario 3 — Sorties famille IDF**
 > `Quelles sorties culturelles pour une famille me recommandes-tu en Ile-de-France ?`
 
-Requete multi-publics (famille/enfant). La requete plus floue oblige le bot a faire davantage de travail d'inference de tags.
+Requête multi-publics (famille/enfant). La requête plus floue oblige le bot a faire davantage de travail d'inference de tags.
 
-**Scenario 4 — Guardrail (requete trop large)**
+**Scenario 4 — Guardrail (requête trop large)**
 > `Donne-moi tous les evenements culturels disponibles en Ile-de-France.`
 
-Ce scenario teste le garde-fou anti-requete-large : le bot doit repondre en moins de 1 ms sans appeler FAISS ni Mistral.
+Ce scenario teste le garde-fou anti-requête-large : le bot doit repondre en moins de 1 ms sans appeler FAISS ni Mistral.
 
 ### Lancer le benchmark
 
@@ -402,9 +402,9 @@ Ce scenario teste le garde-fou anti-requete-large : le bot doit repondre en moin
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe tests/manual/benchmark_chatbot_performance.py --rounds 3 --k-values 5,10 --warmup 1 --pause-ms 200 --filter-mode relaxed --output-json tests/manual/artifacts/benchmark_chatbot_performance_relaxed.json
 ```
 
-### Resultats obtenus (04/05/2026, mode relaxed, 3 rounds, k=5 et k=10)
+### Résultats obtenus (04/05/2026, mode relaxed, 3 rounds, k=5 et k=10)
 
-| Scenario | k | Latence moyenne | Latence p95 | Docs recuperes | Hit-rate |
+| Scenario | k | Latence moyenne | Latence p95 | Docs récupérés | Hit-rate |
 |---|---|---|---|---|---|
 | Concert jazz IDF | 5 | 4315 ms | 4411 ms | 5/5 | 100% |
 | Expo photo IDF | 5 | 4048 ms | 4483 ms | 5/5 | 100% |
@@ -414,25 +414,25 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tests/manual/benchmark_chatbot_p
 | Sorties famille IDF | 10 | 1938 ms | 2100 ms | 1/10 | 100% |
 | Guardrail (trop large) | 10 | **0.12 ms** | 0.14 ms | 0 | 0% (normal) |
 
-Latence globale (tous scenarios metier confondus) :
+Latence globale (tous scenarios métier confondus) :
 - Moyenne : 2938 ms
-- Mediane : 3870 ms
+- Médiane : 3870 ms
 - p95 : 4483 ms
 - Hit-rate docs>0 : **85.7%**
 
 Interpretation :
 - La latence de 2-4 secondes est normale pour un pipeline embed + retrieve + generate avec un LLM distant (Mistral API).
-- Le guardrail repond en moins d'1 ms : les requetes hors perimetre ne sollicitent jamais le LLM ni FAISS.
-- Le hit-rate inferieur a 100% sur le scenario famille est attendu : le corpus IDF contient peu d'evenements tagges explicitement "famille" sans filtre thematique.
+- Le guardrail repond en moins d'1 ms : les requêtes hors périmètre ne sollicitent jamais le LLM ni FAISS.
+- Le hit-rate inférieur a 100% sur le scenario famille est attendu : le corpus IDF contient peu d'événements tagges explicitement "famille" sans filtre thematique.
 
 ### Pourquoi `avg_docs_retrieved` pouvait etre 0 dans les premiers tests
 
-En mode `strict` (filtres ville + tags + fenetre temporelle automatique), la combinaison de ces filtres peut eliminer tous les candidats FAISS :
+En mode `strict` (filtres ville + tags + fenêtre temporelle automatique), la combinaison de ces filtres peut eliminer tous les candidats FAISS :
 
 - La formulation "ce week-end" active un filtre date UTC automatique (via `temporal_deixis.py`) parfois trop restrictif selon les dates dans la base.
-- Ajouter simultanement une ville precise et des tags peut ne trouver aucun evenement correspondant.
+- Ajouter simultanement une ville précise et des tags peut ne trouver aucun événement correspondant.
 
-Le mode `relaxed` desactive tous ces filtres pour valider que le retrieval FAISS fonctionne correctement en isolation.
+Le mode `relaxed` désactivé tous ces filtres pour valider que le retrieval FAISS fonctionne correctement en isolation.
 
 ### 7. Interroger le chatbot
 
@@ -449,7 +449,7 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m streamlit run PullEventsIDFBo
 
 L'interface s'ouvre automatiquement dans le navigateur a l'adresse `http://localhost:8501`.
 
-### 9. Verifier manuellement les statistiques d'index
+### 9. Vérifier manuellement les statistiques d'index
 
 ```bash
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_faiss_indexing.py -q
@@ -459,10 +459,10 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test
 
 ### Fichiers principaux a la racine
 
-- `openagenda_culture_france_rag.py` : collecte OpenAgenda, filtrage IDF, fenetre temporelle fixe, normalisation JSONL RAG.
-- `vectorize_events_mistral.py` : preparation de texte, gestion du fichier existant, generation des embeddings Mistral.
-- `index_events_faiss.py` : chargement des embeddings, construction de l'index, sauvegarde des metadonnees et de l'ID mapping.
-- `faiss_searcher.py` : recherche semantique pure et recherche hybride avec filtres metadata.
+- `openagenda_culture_france_rag.py` : collecte OpenAgenda, filtrage IDF, fenêtre temporelle fixe, normalisation JSONL RAG.
+- `vectorize_events_mistral.py` : preparation de texte, gestion du fichier existant, génération des embeddings Mistral.
+- `index_events_faiss.py` : chargement des embeddings, construction de l'index, sauvegarde des métadonnées et de l'ID mapping.
+- `faiss_searcher.py` : recherche sémantique pure et recherche hybride avec filtres metadata.
 - `rag_chatbot_mistral.py` : orchestration embed -> retrieve -> generate.
 - `chatbot_cli.py` : point d'entree CLI pour interroger le chatbot.
 - `PullEventsIDFBot.py` : interface conversationnelle Streamlit (voir section [Interface Streamlit](#interface-streamlit--lancement-fonctionnement-et-panneau-de-fiabilite)).
@@ -470,34 +470,34 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test
 
 ### Dossier `data/`
 
-Contient les artefacts versionnes de reference :
+Contient les artefacts versionnes de référence :
 
 - corpus RAG JSONL,
 - corpus vectorise JSONL,
 - index FAISS,
-- metadonnees pickle,
+- métadonnées pickle,
 - mapping ID pickle,
 - quelques illustrations et supports visuels.
 
 ### Dossier `tests/`
 
 - `tests/unit/` : tests unitaires de scripts et helpers.
-- `tests/integration/` : tests sur la qualite du JSONL et le chargement / comportement de l'index FAISS.
-- `tests/manual/` : scripts de verification manuelle et tests non automatises.
+- `tests/integration/` : tests sur la qualité du JSONL et le chargement / comportement de l'index FAISS.
+- `tests/manual/` : scripts de vérification manuelle et tests non automatises.
 - `tests/conftest.py` : configuration Pytest et stabilisation des imports.
 
 ### Dossier `tools/`
 
-- `tools/diagnostic/` : scripts de verification ponctuelle de l'API, des filtres et du comportement de collecte.
-- `tools/secondary/` : scripts utilitaires de demonstration et d'inspection (dont `temp_demo.py` : affichage d'un evenement vectorise exemple depuis le corpus).
+- `tools/diagnostic/` : scripts de vérification ponctuelle de l'API, des filtres et du comportement de collecte.
+- `tools/secondary/` : scripts utilitaires de demonstration et d'inspection (dont `temp_demo.py` : affichage d'un événement vectorise exemple depuis le corpus).
 
 ### Dossier `utils/`
 
-- `utils/temporal_deixis.py` : parsing des expressions temporelles deictiques francaises (`ce soir`, `demain`, `ce week-end`, `en mai`, etc.) — retourne une `TemporalWindow` UTC utilisee par le chatbot.
+- `utils/temporal_deixis.py` : parsing des expressions temporelles déictiques francaises (`ce soir`, `demain`, `ce week-end`, `en mai`, etc.) — retourne une `TemporalWindow` UTC utilisee par le chatbot.
 
 ### Dossier `old/`
 
-Historique technique du projet : artefacts d'essais, extractions temporaires, notes et anciens diagnostics. Ce dossier ne doit pas servir de reference principale pour la reproduction courante.
+Historique technique du projet : artefacts d'essais, extractions temporaires, notes et anciens diagnostics. Ce dossier ne doit pas servir de référence principale pour la reproduction courante.
 
 ## Architecture du pipeline
 
@@ -518,9 +518,9 @@ openagenda_culture_france_rag.py
   -> chatbot_cli.py
 ```
 
-## Processus de nettoyage des donnees
+## Processus de nettoyage des données
 
-Le nettoyage est un point central du projet, car la qualite des donnees conditionne directement la qualite des embeddings, la precision de la recherche et la fiabilite des reponses.
+Le nettoyage est un point central du projet, car la qualité des données conditionne directement la qualité des embeddings, la précision de la recherche et la fiabilite des réponses.
 
 ### Nettoyage applique dans la collecte
 
@@ -529,37 +529,37 @@ Le script `openagenda_culture_france_rag.py` met en place plusieurs niveaux de n
 1. normalisation des espaces avec `clean_text`,
 2. suppression du HTML avec `strip_html`,
 3. parsing robuste des dates avec `parse_dt`,
-4. reconstitution de fenetres d'evenement a partir de `timings` avec `parse_timings_window`,
+4. reconstitution de fenêtres d'événement a partir de `timings` avec `parse_timings_window`,
 5. reparation d'intervalles dates incoherents avec `sanitize_date_range`,
-6. deduplication des tags en preservant l'ordre,
-7. verification de la vectorisabilite avec `is_vectorizable`,
-8. verification des URLs source HTTP/HTTPS,
-9. deduplication des documents par `raw_uid` ou cle de secours.
+6. déduplication des tags en preservant l'ordre,
+7. vérification de la vectorisabilite avec `is_vectorizable`,
+8. vérification des URLs source HTTP/HTTPS,
+9. déduplication des documents par `raw_uid` ou clé de secours.
 
 ### Nettoyage applique avant vectorisation
 
-Le script `vectorize_events_mistral.py` ajoute un second filet de securite :
+Le script `vectorize_events_mistral.py` ajoute un second filet de sécurité :
 
 1. reconstruction d'un texte de secours si `content` est trop pauvre,
 2. normalisation du texte d'entree pour l'embedding,
 3. filtrage des documents trop courts,
-4. validation stricte de la presence d'une URL source,
+4. validation stricte de la présence d'une URL source,
 5. gestion propre du fichier vectorise existant,
 6. compactage de sortie pour supprimer les doublons ou lignes non pertinentes.
 
-### Resultat qualite observable
+### Résultat qualité observable
 
 Sur les 8014 documents RAG versionnes :
 
 - 3 documents seulement remontent un champ manquant dans `metadata.quality_missing_fields`,
 - ces 3 cas concernent uniquement le champ `city`,
-- aucun document n'est invalide pour la vectorisation dans la suite de validation integration.
+- aucun document n'est invalide pour la vectorisation dans la suite de validation intégration.
 
-## Scripts de pre-processing et documentation integree par docstrings
+## Scripts de pre-processing et documentation intégrée par docstrings
 
 Tous les scripts du pipeline sont documentes via des **docstrings de style Google/NumPy**
 couvrant chaque module (description, entrees, sorties, usage) et chaque fonction publique
-(Args / Returns / Raises). Cette documentation integree garantit que les hypotheses
+(Args / Returns / Raises). Cette documentation intégrée garantit que les hypotheses
 de conception restent visibles a la maintenance et que les artefacts produits
 sont explicitement nommes.
 
@@ -596,7 +596,7 @@ Le script `vectorize_events_mistral.py` :
 - lit le JSONL RAG,
 - prepare le texte a embedder,
 - appelle `mistral-embed`,
-- conserve les metadonnees utiles pour la recherche hybride,
+- conserve les métadonnées utiles pour la recherche hybride,
 - ecrit `evenements_publics_openagenda_culture_ile_de_france_vectors.jsonl`.
 
 Chaque ligne du fichier vectorise contient :
@@ -641,20 +641,20 @@ Chacun des 1024 nombres capture un aspect sémantique différent du titre et du 
 Le script `index_events_faiss.py` :
 
 - charge les embeddings en `float32`,
-- verifie la dimension attendue `1024`,
-- cree l'index FAISS,
+- vérifié la dimension attendue `1024`,
+- créé l'index FAISS,
 - sauvegarde l'index binaire,
-- sauvegarde les metadonnees compressees,
+- sauvegarde les métadonnées compressees,
 - sauvegarde un mapping `doc_id -> position FAISS`.
 
 ### Gestion de l'index
 
 Le module `faiss_searcher.py` prend ensuite le relai pour :
 
-- charger l'index et les metadonnees,
-- executer une recherche L2 top-k,
+- charger l'index et les métadonnées,
+- exécuter une recherche L2 top-k,
 - filtrer les candidats par ville, region, tags ou date,
-- renvoyer des resultats enrichis avec score de similarite et metadata.
+- renvoyer des résultats enrichis avec score de similarite et metadata.
 
 ## Validation des index
 
@@ -665,115 +665,115 @@ Les chiffres ci-dessous proviennent des artefacts versionnes et du chargement ef
 - 8014 documents disponibles
 - 493 villes couvertes
 - 1 region (Ile-de-France, graphie normalisee)
-- 8486 tags libres uniques (mots-cles libres saisis par les organisateurs dans OpenAgenda)
+- 8486 tags libres uniques (mots-clés libres saisis par les organisateurs dans OpenAgenda)
 
 ### Note sur les tags libres
 
-Les 8486 tags sont des mots-cles libres OpenAgenda, non controles par une taxonomie officielle. Chaque organisateur saisit les siens : on y trouve des tags generiques (`culture`, `concert`), des tags techniques (`no-code`, `BTS`), des tags specifiques a un evenement, et quelques donnees parasites (codes courts, caracteres etrangers). Ce n'est pas comparable aux 32 categories officielles d'une taxonomie fermee.
+Les 8486 tags sont des mots-clés libres OpenAgenda, non controles par une taxonomie officielle. Chaque organisateur saisit les siens : on y trouve des tags génériques (`culture`, `concert`), des tags techniques (`no-code`, `BTS`), des tags spécifiques a un événement, et quelques données parasites (codes courts, caractères etrangers). Ce n'est pas comparable aux 32 catégories officielles d'une taxonomie fermee.
 
 ### Correction appliquee sur la region
 
-Le code de collecte normalisait `Île-de-France` en `Ile-de-France` a partir de la version corrigee (27/04/2026). La regeneration du corpus sur cette version produira 1 seule region.
+Le code de collecte normalisait `Île-de-France` en `Ile-de-France` a partir de la version corrigee (27/04/2026). La régénération du corpus sur cette version produira 1 seule region.
 
-## KPI qualite
+## KPI qualité
 
 ### Vue d'ensemble des 41 tests
 
-| Categorie | Tests | Fichier cible | Ce qui est valide |
+| Catégorie | Tests | Fichier cible | Ce qui est valide |
 | --- | --- | --- | --- |
 | Tests unitaires | 23 | `tests/unit/` | Fonctions isolees, imports, guardrails, parsing temporel |
-| Garde qualite integration | 1 | `test_rag_quality_guard.py` | Corpus RAG complet (8014 docs) vectorisable et coherent |
-| Indexation FAISS integration | 17 | `test_faiss_indexing.py` | Index charge, recherche, performance, coherence |
+| Garde qualité intégration | 1 | `test_rag_quality_guard.py` | Corpus RAG complet (8014 docs) vectorisable et cohérent |
+| Indexation FAISS intégration | 17 | `test_faiss_indexing.py` | Index charge, recherche, performance, cohérence |
 | **Total global** | **41** | | **41/41 PASS (100%)** |
 
 3 warnings de depreciation SWIG observables, non bloquants.
 
-### Pourquoi cette repartition
+### Pourquoi cette répartition
 
 - **Tests unitaires (23)** : rapides, sans IO, ciblent une fonction a la fois. Permettent de deboguer rapidement un composant isole.
-- **Garde qualite (1)** : verifie le JSONL avant indexation. Prerequis logique a toute regeneration du corpus.
-- **FAISS integration (17)** : testent l'index reel charge en memoire (31.30 MB). Plus couteux, couvrent la recherche end-to-end et la performance.
+- **Garde qualité (1)** : vérifié le JSONL avant indexation. Prerequis logique a toute régénération du corpus.
+- **FAISS intégration (17)** : testent l'index réel charge en mémoire (31.30 MB). Plus couteux, couvrent la recherche end-to-end et la performance.
 
-### Detail hierarchique des 41 tests
+### Détail hierarchique des 41 tests
 
 **Tests unitaires — 23 tests repartis sur 4 modules**
 
 | Module | Tests | Sujets couverts |
 | --- | --- | --- |
 | `test_imports.py` | 3 | Importabilite langchain, SDK Mistral, faiss-cpu |
-| `test_rag_chatbot_mistral.py` | 8 | Guardrails, parametres Mistral, format prompt, citation sources, inference tags |
-| `test_temporal_deixis.py` | 6 | Expressions deictiques : ce week-end, ce soir, demain soir, apres-demain, aucune |
-| `test_vectorize_events_mistral.py` | 6 | Preparation document, rejet URL manquante, vectorisation e2e, cle API |
+| `test_rag_chatbot_mistral.py` | 8 | Guardrails, paramètres Mistral, format prompt, citation sources, inference tags |
+| `test_temporal_deixis.py` | 6 | Expressions déictiques : ce week-end, ce soir, demain soir, après-demain, aucune |
+| `test_vectorize_events_mistral.py` | 6 | Preparation document, rejet URL manquante, vectorisation e2e, clé API |
 
-**Garde qualite dataset — 1 test**
+**Garde qualité dataset — 1 test**
 
-| Test | Ce qui est verifie | Valeur observee |
+| Test | Ce qui est vérifié | Valeur observee |
 | --- | --- | --- |
-| `test_generated_jsonl_is_vectorizable_and_consistent` | Champs requis, dates, vectorisabilite, URL HTTP, qualite metadata | PASSED sur 8014 docs |
+| `test_generated_jsonl_is_vectorizable_and_consistent` | Champs requis, dates, vectorisabilite, URL HTTP, qualité metadata | PASSED sur 8014 docs |
 
 **Classe `TestFAISSIndexCreation` — 3 tests**
 
-| Test | Ce qui est verifie | Valeur observee |
+| Test | Ce qui est vérifié | Valeur observee |
 | --- | --- | --- |
-| `test_index_exists` | Fichiers d'index presents sur disque | PASSED |
-| `test_index_loading` | Chargement en memoire | `ntotal == 8014`, `dim == 1024` |
-| `test_index_consistency` | Coherence metadata / index / id_mapping | `8014 == 8014 == 8014` |
+| `test_index_exists` | Fichiers d'index présents sur disque | PASSED |
+| `test_index_loading` | Chargement en mémoire | `ntotal == 8014`, `dim == 1024` |
+| `test_index_consistency` | Cohérence metadata / index / id_mapping | `8014 == 8014 == 8014` |
 
 **Classe `TestSemanticSearch` — 4 tests**
 
-| Test | Ce qui est verifie | Valeur observee |
+| Test | Ce qui est vérifié | Valeur observee |
 | --- | --- | --- |
-| `test_basic_search` | Recherche vectorielle top-k | k resultats restitues |
-| `test_search_results_ranking` | Ordre des resultats par distance L2 | Distances croissantes confirme |
-| `test_search_k_limit` | Nombre de resultats <= k demande | PASSED |
-| `test_search_returns_valid_metadata` | Champs requis presents dans chaque resultat | PASSED |
+| `test_basic_search` | Recherche vectorielle top-k | k résultats restitues |
+| `test_search_results_ranking` | Ordre des résultats par distance L2 | Distances croissantes confirme |
+| `test_search_k_limit` | Nombre de résultats <= k demande | PASSED |
+| `test_search_returns_valid_metadata` | Champs requis présents dans chaque résultat | PASSED |
 
 **Classe `TestHybridSearch` — 5 tests**
 
-| Test | Ce qui est verifie | Valeur observee |
+| Test | Ce qui est vérifié | Valeur observee |
 | --- | --- | --- |
 | `test_hybrid_search_basic` | Recherche hybride sans filtre | PASSED |
-| `test_hybrid_search_city_filter` | Tous les resultats matchent la ville demandee | PASSED |
-| `test_hybrid_search_tags_filter` | Au moins un tag commun par resultat | PASSED |
-| `test_hybrid_search_empty_results` | Filtres tres restrictifs | 0 resultat, sans exception |
+| `test_hybrid_search_city_filter` | Tous les résultats matchent la ville demandee | PASSED |
+| `test_hybrid_search_tags_filter` | Au moins un tag commun par résultat | PASSED |
+| `test_hybrid_search_empty_results` | Filtres tres restrictifs | 0 résultat, sans exception |
 | `test_hybrid_search_multiple_filters` | Combinaison ville + tags | PASSED |
 
 **Classe `TestIndexStats` — 3 tests**
 
-| Test | Ce qui est verifie | Valeur observee |
+| Test | Ce qui est vérifié | Valeur observee |
 | --- | --- | --- |
-| `test_get_stats` | Statistiques d'index coherentes | `unique_tags`, `unique_cities` couverts |
-| `test_get_by_id` | Recuperation de document par identifiant | Document retourne |
+| `test_get_stats` | Statistiques d'index cohérentes | `unique_tags`, `unique_cities` couverts |
+| `test_get_by_id` | Récupération de document par identifiant | Document retourne |
 | `test_nonexistent_id` | ID absent | `None` sans exception |
 
 **Classe `TestPerformance` — 2 tests**
 
-| Test | Ce qui est verifie | Valeur observee (100 requetes, seed fixe) |
+| Test | Ce qui est vérifié | Valeur observee (100 requêtes, seed fixe) |
 | --- | --- | --- |
-| `test_search_speed` | Latence par requete < 100 ms | mediane 1.30 ms, p95 2.03 ms, max 3.14 ms |
+| `test_search_speed` | Latence par requête < 100 ms | médiane 1.30 ms, p95 2.03 ms, max 3.14 ms |
 | `test_index_memory_efficiency` | RAM index sous le seuil fixe | 31.30 MB (ntotal x dim x 4B) |
 
-### KPI performance FAISS (benchmark 100 requetes, seed fixe)
+### KPI performance FAISS (benchmark 100 requêtes, seed fixe)
 
-| Strategie | k | Min | Mediane | Moyenne | p95 | Max |
+| Stratégie | k | Min | Médiane | Moyenne | p95 | Max |
 | --- | --- | --- | --- | --- | --- | --- |
 | Recherche simple | 5 | 1.09 ms | **1.30 ms** | 1.40 ms | 2.03 ms | 3.14 ms |
 | Hybride (k=10, candidats=20) | 20 | 1.12 ms | **1.35 ms** | 1.42 ms | 1.95 ms | 2.80 ms |
 | Hybride max (k=50, candidats=100) | 100 | 1.13 ms | **1.29 ms** | 1.34 ms | 1.55 ms | 2.49 ms |
 
-`IndexFlatL2` scanne tous les vecteurs sequentiellement : augmenter k de 5 a 100 ne coute presque rien (~0.1 ms).
+`IndexFlatL2` scanne tous les vecteurs séquentiellement : augmenter k de 5 a 100 ne coute presque rien (~0.1 ms).
 
-### KPI qualite corpus
+### KPI qualité corpus
 
-| Metrique | Valeur | Interpretation |
+| Métrique | Valeur | Interpretation |
 | --- | --- | --- |
-| Documents RAG | 8014 | Corpus regenere sur fenetre corrigee 2025-2027 |
+| Documents RAG | 8014 | Corpus régénéré sur fenêtre corrigee 2025-2027 |
 | Vecteurs FAISS | 8014 | 100% alignement RAG -> vecteurs |
 | Index FAISS | 31.30 MB | Taille raisonnable, chargement rapide |
-| Villes couvertes | 493 | Couverture geographique large IDF |
+| Villes couvertes | 493 | Couverture géographique large IDF |
 | Region | 1 (Ile-de-France, normalisee) | Doublons graphiques corriges |
 | Tags uniques | 8486 | Tags libres (vocabulaire non controle) |
-| Docs sans ville | 5 | Qualite tres bonne (0.06%) |
+| Docs sans ville | 5 | Qualité tres bonne (0.06%) |
 | Tests PASS | 41/41 | 100% pipeline valide |
 
 ## KPI pipeline et dates
@@ -786,23 +786,23 @@ Le code de collecte normalisait `Île-de-France` en `Ile-de-France` a partir de 
 | Lignes du fichier de vecteurs | 8014 |
 | IDs uniques dans les vecteurs | 8014 |
 | Taux d'alignement RAG -> vecteurs | 100% |
-| Metadonnees FAISS | 8014 |
+| Métadonnées FAISS | 8014 |
 | Entrees de mapping ID | 8014 |
 
-### KPI de fenetre temporelle
+### KPI de fenêtre temporelle
 
 | Indicateur | Valeur |
 | --- | --- |
-| Fenetre forcee de collecte | 25/04/2025 -> 25/04/2027 |
-| Evenements commencant avant 25/04/2026 mais conserves | 313 |
-| Evenements commencant avant 25/04/2025 mais encore actifs | 142 |
-| Evenements se terminant apres 25/04/2027 | 17 |
+| Fenêtre forcee de collecte | 25/04/2025 -> 25/04/2027 |
+| Événements commencant avant 25/04/2026 mais conserves | 313 |
+| Événements commencant avant 25/04/2025 mais encore actifs | 142 |
+| Événements se terminant après 25/04/2027 | 17 |
 
 ### Comment lire ces chiffres
 
-La collecte ne retient pas uniquement les evenements dont la date de debut tombe dans la fenetre. Le projet applique une logique de recouvrement d'intervalle : un evenement est conserve si son intervalle `[event_start, event_end]` croise la fenetre cible.
+La collecte ne retient pas uniquement les événements dont la date de debut tombe dans la fenêtre. Le projet applique une logique de recouvrement d'intervalle : un événement est conserve si son intervalle `[event_start, event_end]` croise la fenêtre cible.
 
-C'est un choix pragmatique et pertinent pour les expositions longues, parcours permanents ou installations s'etendant sur plusieurs mois. Il explique pourquoi certains evenements commencent avant `2025-04-25` ou se terminent apres `2027-04-25` tout en restant presents dans le corpus.
+C'est un choix pragmatique et pertinent pour les expositions longues, parcours permanents ou installations s'etendant sur plusieurs mois. Il explique pourquoi certains événements commencent avant `2025-04-25` ou se terminent après `2027-04-25` tout en restant présents dans le corpus.
 
 ## KPI index FAISS
 
@@ -822,21 +822,21 @@ C'est un choix pragmatique et pertinent pour les expositions longues, parcours p
 | JSONL RAG | 10.26 MB |
 | JSONL vecteurs | 192.84 MB |
 | Index FAISS | 31.30 MB |
-| Metadonnees FAISS | 4.36 MB |
+| Métadonnées FAISS | 4.36 MB |
 | Mapping ID | 0.34 MB |
 | Taille totale artefacts index | 36.00 MB |
 
-## Recherche hybride : principe, metadonnees et choix d'implementation
+## Recherche hybride : principe, métadonnées et choix d'implementation
 
 ### Comment la recherche hybride fonctionne ici
 
 La recherche hybride est implemente dans `faiss_searcher.py` avec une logique simple et robuste :
 
 1. calcul des candidats via recherche vectorielle FAISS,
-2. filtrage des candidats par metadonnees,
-3. retour des meilleurs resultats restants.
+2. filtrage des candidats par métadonnées,
+3. retour des meilleurs résultats restants.
 
-Dans l'etat actuel du code, la strategie est :
+Dans l'état actuel du code, la stratégie est :
 
 - recherche vectorielle sur `max(k * 2, 20)` documents,
 - filtrage ensuite par :
@@ -846,25 +846,25 @@ Dans l'etat actuel du code, la strategie est :
   - `after_date`,
   - `before_date`.
 
-### Pourquoi chercher aussi dans les metadonnees
+### Pourquoi chercher aussi dans les métadonnées
 
-La recherche purement vectorielle est excellente pour la proximite semantique, mais elle ne garantit pas a elle seule :
+La recherche purement vectorielle est excellente pour la proximite sémantique, mais elle ne garantit pas a elle seule :
 
-- le respect d'une ville precise,
+- le respect d'une ville précise,
 - le respect d'une contrainte de date,
-- la presence d'un tag metier explicite,
-- la remontee de documents avec bonnes metadonnees de contexte.
+- la présence d'un tag métier explicite,
+- la remontee de documents avec bonnes métadonnées de contexte.
 
-Le filtre metadata est donc indispensable pour des requetes comme :
+Le filtre metadata est donc indispensable pour des requêtes comme :
 
 - `concert de jazz a Paris`,
 - `spectacle a Aubervilliers`,
 - `evenement gratuit pour enfant`,
 - `festival cet ete en ile de france`.
 
-### Quelles metadonnees sont remontees et exploitees
+### Quelles métadonnées sont remontees et exploitees
 
-Les metadonnees chargees depuis l'index contiennent notamment :
+Les métadonnées chargees depuis l'index contiennent notamment :
 
 - `id`,
 - `title`,
@@ -881,7 +881,7 @@ Les metadonnees chargees depuis l'index contiennent notamment :
 Ces informations servent a deux niveaux :
 
 1. filtrer les documents avant la synthese,
-2. enrichir la reponse finale du chatbot avec date, lieu et source.
+2. enrichir la réponse finale du chatbot avec date, lieu et source.
 
 ### Comment les tags sont extraits
 
@@ -891,13 +891,13 @@ Dans `openagenda_culture_france_rag.py`, la fonction `extract_tags` pioche dans 
 keywords -> keywords_fr -> tags -> theme -> themes -> themes_fr -> category
 ```
 
-- Si le champ est une **liste** : chaque element devient un tag.
+- Si le champ est une **liste** : chaque élément devient un tag.
 - Si c'est une **chaine** : elle est decoupee sur `,` `;` `|`.
 - Si rien n'est trouve : le tag de secours `culture` est injecte.
 
-Ensuite : deduplication en conservant l'ordre, normalisation `clean_text`.
+Ensuite : déduplication en conservant l'ordre, normalisation `clean_text`.
 
-C'est pour cela qu'il y a **8 486 tags uniques** dans le corpus courant : chaque organisateur saisit librement ses propres mots-cles dans ces champs, sans vocabulaire controle. On y trouve des tags generiques (`culture`, `concert`), des tags techniques (`no-code`, `BTS`), des tags specifiques a un evenement, et quelques donnees parasites (codes courts, caracteres etrangers, phrases longues).
+C'est pour cela qu'il y a **8 486 tags uniques** dans le corpus courant : chaque organisateur saisit librement ses propres mots-clés dans ces champs, sans vocabulaire controle. On y trouve des tags génériques (`culture`, `concert`), des tags techniques (`no-code`, `BTS`), des tags spécifiques a un événement, et quelques données parasites (codes courts, caractères etrangers, phrases longues).
 
 Exemples observes sur le corpus :
 
@@ -949,76 +949,76 @@ doc_tags & filter_tags   # au moins 1 tag commun -> garde
 Le choix de `IndexFlatL2` est defensable ici pour quatre raisons :
 
 1. le corpus reste de taille moderee avec 8014 vecteurs,
-2. la recherche exacte est deja tres rapide,
+2. la recherche exacte est déjà tres rapide,
 3. l'absence d'approximation simplifie le debug et la validation,
-4. on evite la complexite de parametrage d'indexes approximatifs alors que le gain n'est pas necessaire a cette echelle.
+4. on evite la complexité de paramétrage d'indexes approximatifs alors que le gain n'est pas nécessaire a cette echelle.
 
 ### Mini-benchmark comparatif sur les artefacts courants
 
-Benchmark realise sur 100 requetes echantillonnees a partir des embeddings versionnes :
+Benchmark réalisé sur 100 requêtes echantillonnees a partir des embeddings versionnes :
 
-| Index | Latence moyenne / requete | Recall@10 vs exact | Observation |
+| Index | Latence moyenne / requête | Recall@10 vs exact | Observation |
 | --- | --- | --- | --- |
-| `IndexFlatL2` | 0.055 ms | 1.000 | base exacte, reference |
-| `IndexHNSWFlat` | 0.018 ms | 0.998 | plus rapide, mais approximation et parametrage supplementaire |
+| `IndexFlatL2` | 0.055 ms | 1.000 | base exacte, référence |
+| `IndexHNSWFlat` | 0.018 ms | 0.998 | plus rapide, mais approximation et paramétrage supplementaire |
 | `IndexIVFFlat` | 0.027 ms | 0.922 | plus rapide que flat, mais perte de rappel plus nette |
 
 ### Conclusion technique
 
 Sur un corpus de 8014 vecteurs, `IndexFlatL2` est le meilleur compromis :
 
-- la latence absolue est deja negligeable,
+- la latence absolue est déjà negligeable,
 - le rappel est parfait,
 - la maintenance reste simple,
 - la validation par tests est plus lisible.
 
-`IndexHNSWFlat` deviendrait un candidat credible si le corpus grossissait fortement et que la charge requete augmentait. `IndexIVFFlat` est moins convaincant a cette taille car la perte de rappel est disproportionnee par rapport au gain observe.
+`IndexHNSWFlat` deviendrait un candidat credible si le corpus grossissait fortement et que la charge requête augmentait. `IndexIVFFlat` est moins convaincant a cette taille car la perte de rappel est disproportionnee par rapport au gain observe.
 
-## Resultats chatbot : questions, reponses et jugement
+## Résultats chatbot : questions, réponses et jugement
 
-Les cas ci-dessous ont ete executes sur le chatbot reel, a partir des artefacts versionnes, sans edition intermediaire des donnees.
+Les cas ci-dessous ont ete executes sur le chatbot réel, a partir des artefacts versionnes, sans edition intermediaire des données.
 
 ### 1. Question : `je cherche une sortie en famille ce week-end en ile de france`
 
-Top documents recuperes sur le corpus regenere :
+Top documents récupérés sur le corpus régénéré :
 
 - `Dimanche au Vert en famille avec enfants de 3 à 10 ans - Parc de l'Ile St Germain à Issy-les-Moulineaux`
 
-Reponse observee :
+Réponse observee :
 
 - le chatbot propose `Dimanche au Vert` a Issy-les-Moulineaux, le 14/09/2025,
-- 6 documents sources recuperes, modele `mistral-small-latest`.
+- 6 documents sources récupérés, modèle `mistral-small-latest`.
 
 Jugement : **partiel / temporel fragile**
 
-La composante `famille` est correcte, la zone IDF aussi, mais l'ancrage `ce week-end` n'est pas fiable dans la CLI actuelle. La question met donc en evidence une limite de chainage entre requete libre et filtres temporels.
+La composante `famille` est correcte, la zone IDF aussi, mais l'ancrage `ce week-end` n'est pas fiable dans la CLI actuelle. La question met donc en evidence une limite de chainage entre requête libre et filtres temporels.
 
 ### 2. Question : `as-tu un concert de jazz a Paris ?`
 
-Top documents recuperes sur le corpus regenere :
+Top documents récupérés sur le corpus régénéré :
 
 - `Les samedis "Brasil e jazz" / par Jean-Baptiste Loutte` — 23/05/2026 19h30 & 21h30
 - `JASS Session / Jam Jazz` — 29/05/2026 20h30
 - `Échecs & Jam ! Entrée libre` — 17/05, 03/05, 31/05/2026 de 17h à 22h
 
-Reponse observee :
+Réponse observee :
 
-- plusieurs evenements jazz a Paris sont proposes avec horaires precis,
+- plusieurs événements jazz a Paris sont proposes avec horaires precis,
 - les dates, horaires et sources sont correctement restitues,
-- 6 documents sources recuperes.
+- 6 documents sources récupérés.
 
 Jugement : **bon**
 
-Le couple intention semantique + filtre implicite de lieu fonctionne bien ici, grace a des metadonnees riches et a des titres tres discriminants.
+Le couple intention sémantique + filtre implicite de lieu fonctionne bien ici, grace a des métadonnées riches et a des titres tres discriminants.
 
 ### 3. Question : `je veux une exposition photo en ile de france`
 
-Top documents recuperes sur le corpus regenere :
+Top documents récupérés sur le corpus régénéré :
 
 - `Expo Photo "c'est la fête !"` — 21/03/2026
 - `Expositions archéologiques` — 13/06/2026
 
-Reponse observee :
+Réponse observee :
 
 - le chatbot remonte plusieurs expositions pertinentes,
 - il distingue correctement une exposition photo d'une exposition non photo,
@@ -1026,36 +1026,36 @@ Reponse observee :
 
 Jugement : **bon**
 
-Le systeme tire bien parti des tags et du contenu descriptif.
+Le système tire bien parti des tags et du contenu descriptif.
 
 ### 4. Question : `donne moi un evenement gratuit pour enfant`
 
-Top documents recuperes sur le corpus regenere :
+Top documents récupérés sur le corpus régénéré :
 
 - `Les mercredis des possibles` a Saint-Ouen — 27/05/2026
 
-Reponse observee :
+Réponse observee :
 
-- un evenement pour enfant est propose,
+- un événement pour enfant est propose,
 - la gratuite n'est pas explicitement demontree par la sortie choisie,
-- les champs date / lieu / source sont presents.
+- les champs date / lieu / source sont présents.
 
 Jugement : **acceptable**
 
-L'intention `enfant` est bien couverte, mais le critere `gratuit` gagnerait a etre un filtre metadata explicite plutot qu'une simple inference semantique.
+L'intention `enfant` est bien couverte, mais le critère `gratuit` gagnerait a etre un filtre metadata explicite plutot qu'une simple inference sémantique.
 
 ### 5. Question : `je cherche une activite autour des sciences ou de l astronomie`
 
-Top documents recuperes sur le corpus regenere :
+Top documents récupérés sur le corpus régénéré :
 
 - stages `Initiation à l'astronomie` pour 6-8 ans, 9-11 ans et 12-14 ans — 2025/2026
 - `Astro junior`
 
-Reponse observee :
+Réponse observee :
 
 - le chatbot propose plusieurs activites tres pertinentes,
 - l'astronomie est bien couverte avec des propositions par tranche d'age,
-- la reponse s'appuie sur plusieurs sources solides.
+- la réponse s'appuie sur plusieurs sources solides.
 
 Jugement : **tres bon**
 
@@ -1063,26 +1063,26 @@ Le corpus est bien outille sur ce theme et les tags scientifiques remontent corr
 
 ### 6. Question : `propose moi un spectacle a Aubervilliers`
 
-Top documents recuperes sur le corpus regenere :
+Top documents récupérés sur le corpus régénéré :
 
 - `La Bamboche à Bambins` au Point Fort d'Aubervilliers — 18/03/2026
 
-Reponse observee :
+Réponse observee :
 
-- la reponse finale propose `La Bamboche à Bambins` au Point Fort d'Aubervilliers avec date et source.
+- la réponse finale propose `La Bamboche à Bambins` au Point Fort d'Aubervilliers avec date et source.
 
 Jugement : **bon**
 
-Le corpus regenere remonte maintenant un spectacle localement pertinent en premier candidat, ce qui est une amelioration par rapport a la version anterieure.
+Le corpus régénéré remonte maintenant un spectacle localement pertinent en premier candidat, ce qui est une amelioration par rapport a la version antérieure.
 
 ### 7. Question : `y a-t-il un festival de musique cet ete en ile de france ?`
 
-Top documents recuperes sur le corpus regenere :
+Top documents récupérés sur le corpus régénéré :
 
 - `Un temps pour Elles` — 4-5/07/2026
 - `Seine en scène` — 21/06/2026
 
-Reponse observee :
+Réponse observee :
 
 - deux festivals d'ete sont proposes avec des dates en juin-juillet 2026,
 - les dates sont cohérentes avec l'ete IDF,
@@ -1090,96 +1090,96 @@ Reponse observee :
 
 Jugement : **bon**
 
-Sur le corpus regenere (8014 docs), la thematique `festival de musique ete` remonte directement des evenements situes en juillet et juin, ce qui est une amelioration nette par rapport a la version anterieure qui proposait des evenements de septembre.
+Sur le corpus régénéré (8014 docs), la thematique `festival de musique ete` remonte directement des événements situes en juillet et juin, ce qui est une amelioration nette par rapport a la version antérieure qui proposait des événements de septembre.
 
 ### 8. Question : `donne moi une idee de sortie culturelle a Paris demain soir`
 
-Top documents recuperes sur le corpus regenere :
+Top documents récupérés sur le corpus régénéré :
 
 - `Dessine-moi une œuvre` — 23/05/2026 a Colombes/Paris
 
-Reponse observee :
+Réponse observee :
 
 - une nocturne parisienne est bien proposee,
-- la date retournee dans la reponse correspond a `23 mai 2026`,
-- cela ne correspond pas a `demain soir` (28/04/2026) — le temporel deictique n'est pas injecte dans le retrieval.
+- la date retournee dans la réponse correspond a `23 mai 2026`,
+- cela ne correspond pas a `demain soir` (28/04/2026) — le temporel déictique n'est pas injecte dans le retrieval.
 
 Jugement : **partiel / erreur d'ancrage temporel**
 
 La suggestion culturelle reste credible, mais la recherche n'est pas contrainte temporellement par la deixis `demain soir`.
 
-## Bilan des reponses chatbot
+## Bilan des réponses chatbot
 
 ### Forces constatees (corpus 8014 documents)
 
-- bonne performance sur les requetes thematiques : jazz, photo, sciences, astronomie,
+- bonne performance sur les requêtes thematiques : jazz, photo, sciences, astronomie,
 - bonnes citations de sources,
-- bonne exploitation des tags et des metadonnees de lieu,
+- bonne exploitation des tags et des métadonnées de lieu,
 - amelioration nette sur les festivals d'ete et les spectacles locaux grace au corpus elargi,
 - index FAISS suffisamment riche pour retourner plusieurs candidats exploitables.
 
 ### Limites constatees
 
-- le temporel deictique n'est pas relie de facon deterministe a la recherche hybride,
-- les criteres `gratuit`, `famille`, `ce week-end`, `demain soir`, `cet ete` gagneraient a devenir des filtres explicites,
-- certains cas geographiques montrent un retrieval initial bruite avant que le LLM n'isole une bonne suggestion.
+- le temporel déictique n'est pas relie de facon déterministe a la recherche hybride,
+- les critères `gratuit`, `famille`, `ce week-end`, `demain soir`, `cet ete` gagneraient a devenir des filtres explicites,
+- certains cas géographiques montrent un retrieval initial bruite avant que le LLM n'isole une bonne suggestion.
 
 ## Filtrage intentions/tags + fallback hors-contexte
 
 L'amelioration implementee repose sur 4 couches dans `MistralRAGChatbot.ask`:
 
-1. **Detection de questions hors-perimetre** avant retrieval.
-2. **Detection de questions quantitatives base/corpus** avant retrieval.
-3. **Detection de requetes trop generales** avant retrieval.
-4. **Inference des intentions metier -> tags** puis filtrage pre-retrieval via `search_hybrid(tags=...)`.
+1. **Détection de questions hors-périmètre** avant retrieval.
+2. **Détection de questions quantitatives base/corpus** avant retrieval.
+3. **Détection de requêtes trop generales** avant retrieval.
+4. **Inference des intentions métier -> tags** puis filtrage pre-retrieval via `search_hybrid(tags=...)`.
 
 ### 1) Fallback hors-contexte
 
 Si la question contient un indice hors-domaine (ex: `meteo`, `temps`, `pluie`) sans indice culturel, le bot repond avec un message fixe:
 
-> Cette question semble hors du perimetre du bot (evenements culturels en Ile-de-France). Je peux t'aider pour des sorties culturelles (concert, exposition, spectacle, activites famille, etc.).
+> Cette question semble hors du périmètre du bot (événements culturels en Ile-de-France). Je peux t'aider pour des sorties culturelles (concert, exposition, spectacle, activites famille, etc.).
 
-### 2) Fallback quantitatif base de donnees
+### 2) Fallback quantitatif base de données
 
 Si la question demande un comptage/statistiques globales de la base (`combien`, `nombre`, `total`, `kpi` + `base`, `corpus`, `dataset`, etc.), le bot repond avec un fallback fixe:
 
-> Je ne peux pas fournir de statistiques globales fiables sur la base (comptage total, volumes, KPI) via cette interface conversationnelle. Je peux en revanche recommander des evenements concrets.
+> Je ne peux pas fournir de statistiques globales fiables sur la base (comptage total, volumes, KPI) via cette interface conversationnelle. Je peux en revanche recommander des événements concrets.
 
-### 3) Fallback requete trop generale
+### 3) Fallback requête trop generale
 
-Si la question demande une liste exhaustive sans filtre utile (type d evenement, ville ou periode), le bot refuse de lancer le retrieval et invite a reformuler.
+Si la question demande une liste exhaustive sans filtre utile (type d événement, ville ou période), le bot refuse de lancer le retrieval et invite a reformuler.
 
-Patterns detectes :
+Patterns détectés :
 
 | Pattern | Exemple |
 |---|---|
-| `tous les evenements [culturels]` | *"je voudrais tous les evenements culturels a Paris en 2026"* |
-| `l ensemble des evenements` | *"donne-moi l ensemble des evenements de la base"* |
+| `tous les evenements [culturels]` | *"je voudrais tous les événements culturels a Paris en 2026"* |
+| `l ensemble des evenements` | *"donne-moi l ensemble des événements de la base"* |
 | `tout le programme` / `toute la programmation` | *"tout le programme de mai"* |
 | `liste complete / exhaustive` | *"une liste complete des concerts"* |
 
 Message retourne :
 
-> Ta demande est trop generale pour que je puisse selectionner des evenements pertinents. Je donne de bien meilleurs resultats sur des requetes precises : un type d evenement, une ville ou une periode. Exemples : 'concert de jazz a Paris ce week-end', 'exposition photo en mai a Versailles', 'spectacle famille a Montreuil'.
+> Ta demande est trop generale pour que je puisse selectionner des événements pertinents. Je donne de bien meilleurs résultats sur des requêtes précises : un type d événement, une ville ou une période. Exemples : 'concert de jazz a Paris ce week-end', 'exposition photo en mai a Versailles', 'spectacle famille a Montreuil'.
 
-**Justification** : une requete sans filtre recupererait les k premiers voisins vectoriels les plus proches du vecteur d une phrase tres generique, produisant un bruit incoherent plutot qu une vraie recommandation.
+**Justification** : une requête sans filtre recupererait les k premiers voisins vectoriels les plus proches du vecteur d une phrase tres générique, produisant un bruit incoherent plutot qu une vraie recommandation.
 
 ### 4) Filtrage pre-retrieval base sur les tags
 
-Le pipeline applique cette strategie:
+Le pipeline applique cette stratégie:
 
 1. Normaliser la question (minuscule + suppression accents).
 2. Extraire des tokens candidats depuis la question.
-3. Mapper les intentions metier vers des tags (`INTENT_TO_TAGS`) :
+3. Mapper les intentions métier vers des tags (`INTENT_TO_TAGS`) :
    - `jazz` -> `jazz`, `musique`, `concert`
    - `famille` -> `famille`, `enfant`
    - `exposition` -> `exposition`, `photo`, `art`
    - `science` -> `science`, `astronomie`
-4. Ne conserver que les tags reellement presents dans l'index FAISS (`available_tags`).
+4. Ne conserver que les tags reellement présents dans l'index FAISS (`available_tags`).
 5. Appeler `search_hybrid(..., tags=effective_tags)`.
 6. Si aucun document ne sort (sur-filtrage), fallback automatique vers `search_hybrid(..., tags=None)`.
 
-Ce mecanisme utilise donc bien **tout le catalogue de tags disponible dans les metadonnees** (pas une liste figee uniquement).
+Ce mécanisme utilise donc bien **tout le catalogue de tags disponible dans les métadonnées** (pas une liste figee uniquement).
 
 ## Interface Streamlit — lancement, fonctionnement et panneau de fiabilite
 
@@ -1195,9 +1195,9 @@ L'interface s'ouvre dans le navigateur a l'adresse `http://localhost:8501`.
 
 ### Fonctionnement general
 
-`PullEventsIDFBot.py` est une interface conversationnelle construite avec [Streamlit](https://streamlit.io). Elle encapsule l'integralite du pipeline RAG et expose un formulaire de recherche libre en langage naturel.
+`PullEventsIDFBot.py` est une interface conversationnelle construite avec [Streamlit](https://streamlit.io). Elle encapsule l'intégralité du pipeline RAG et expose un formulaire de recherche libre en langage naturel.
 
-Flux complet d'une requete :
+Flux complet d'une requête :
 
 ```text
 Question utilisateur
@@ -1240,39 +1240,39 @@ Question utilisateur
 
 | Reglage | Role | Recommandation |
 |---|---|---|
-| **Temperature** (0.0-1.0) | Creativite du LLM lors de la generation. 0 = tres factuel, 1 = tres creatif. N'affecte pas le retrieval. | 0.1 - 0.3 |
+| **Temperature** (0.0-1.0) | Creativite du LLM lors de la génération. 0 = tres factuel, 1 = tres creatif. N'affecte pas le retrieval. | 0.1 - 0.3 |
 | **Nombre de documents consultes** (k) | Combien de documents sont injectes dans le contexte envoye au LLM. | 5 - 8 |
 
-Le slider k commande directement le nombre de documents que le LLM voit. Un k trop bas risque de manquer des evenements pertinents ; un k trop eleve noie le LLM dans un contexte trop grand.
+Le slider k commande directement le nombre de documents que le LLM voit. Un k trop bas risque de manquer des événements pertinents ; un k trop eleve noie le LLM dans un contexte trop grand.
 
-### Zone de resultat (partie centrale)
+### Zone de résultat (partie centrale)
 
-Apres chaque recherche, les zones suivantes apparaissent :
+Après chaque recherche, les zones suivantes apparaissent :
 
-1. **Reponse** : texte genere par le LLM, dates converties en format francais.
-2. **Note utilisateur** (si necessaire) : conseil de reformulation si le retrieval est partiel.
-3. **Panneau de fiabilite** : 5 metriques + fenetre temporelle + tags actifs.
-4. **Documents utilises** (expander) : detail de chaque document source avec titre, ville, periode, score et URL.
-5. **Prompt envoye au LLM** (expander discret) : prompt complet reel, incluant le prompt systeme et le contexte avec les vrais documents recuperes — utile pour comprendre exactement ce que le modele a vu.
+1. **Réponse** : texte généré par le LLM, dates converties en format francais.
+2. **Note utilisateur** (si nécessaire) : conseil de reformulation si le retrieval est partiel.
+3. **Panneau de fiabilite** : 5 métriques + fenêtre temporelle + tags actifs.
+4. **Documents utilises** (expander) : détail de chaque document source avec titre, ville, période, score et URL.
+5. **Prompt envoye au LLM** (expander discret) : prompt complet réel, incluant le prompt système et le contexte avec les vrais documents récupérés — utile pour comprendre exactement ce que le modèle a vu.
 6. **Historique** (expander) : toutes les recherches precedentes de la session.
 
-### Guardrails — requetes refusees avant retrieval
+### Guardrails — requêtes refusees avant retrieval
 
-Trois types de questions sont interceptes et refus avant toute requete FAISS :
+Trois types de questions sont interceptes et refus avant toute requête FAISS :
 
-| Type | Detection | Exemple |
+| Type | Détection | Exemple |
 |---|---|---|
 | **Hors domaine** | Indices hors-culture sans mot culturel | *"quelle est la meteo a Paris ?"* |
-| **Statistiques base** | `combien` + `evenements/base/corpus` | *"combien d'evenements contient la base ?"* |
-| **Requete trop large** | Patterns `tous les evenements`, `liste complete`... | *"tous les evenements culturels en 2026"* |
+| **Statistiques base** | `combien` + `evenements/base/corpus` | *"combien d'événements contient la base ?"* |
+| **Requête trop large** | Patterns `tous les evenements`, `liste complete`... | *"tous les événements culturels en 2026"* |
 
-Ces requetes ne coutent aucun appel API et retournent immediatement un message d'orientation.
+Ces requêtes ne coutent aucun appel API et retournent immediatement un message d'orientation.
 
 ### Prompt envoye au LLM
 
 Le prompt se compose de deux parties :
 
-**Prompt systeme (fixe)** :
+**Prompt système (fixe)** :
 
 ```
 Tu es un assistant RAG specialise dans les recommandations d evenements culturels en Ile-de-France.
@@ -1298,55 +1298,55 @@ Source: https://openagenda.com/...
 [k] ...
 ```
 
-Le prompt reel de chaque requete est visible dans l'interface via l'expander **"🔬 Prompt envoye au LLM"** (affiche sous les sources, ferme par defaut).
+Le prompt réel de chaque requête est visible dans l'interface via l'expander **"🔬 Prompt envoye au LLM"** (affiche sous les sources, ferme par défaut).
 
 ### Panneau de fiabilite
 
 | Indicateur | Signification | Seuils |
 |---|---|---|
-| **Niveau** | Estimation globale | 🟢 score>=0.72 + 2 sources + 70% dates ; 🟠 score>=0.60 ; 🔴 en-dessous ; ⚪ hors-perimetre |
+| **Niveau** | Estimation globale | 🟢 score>=0.72 + 2 sources + 70% dates ; 🟠 score>=0.60 ; 🔴 en-dessous ; ⚪ hors-périmètre |
 | **Docs utilises** | Documents injectes dans le prompt | = valeur du slider k |
-| **Sources distinctes** | Nombre d URL OpenAgenda differentes | Plus eleve = reponse mieux recoupee |
-| **Score retrieval moyen** | Proximite semantique question/docs | 0 a 1 |
+| **Sources distinctes** | Nombre d URL OpenAgenda différentes | Plus eleve = réponse mieux recoupee |
+| **Score retrieval moyen** | Proximite sémantique question/docs | 0 a 1 |
 | **Couverture dates** | Part des docs avec dates exploitables | 100% = filtrage temporel efficace |
-| **Fenetre temporelle** | Expression temporelle detectee | Ex. `ce_weekend`, `demain_soir`, `en_mai` |
+| **Fenêtre temporelle** | Expression temporelle détectée | Ex. `ce_weekend`, `demain_soir`, `en_mai` |
 | **Tags actifs** | Tags inferences depuis la question | Filtres appliques en pre-retrieval |
 
 ### Role des tags dans la recherche hybride
 
 Les tags inferres participent a deux niveaux :
 
-1. **Filtre dur** : un document est elimine si aucun de ses tags ne correspond a ceux de la requete.
+1. **Filtre dur** : un document est elimine si aucun de ses tags ne correspond a ceux de la requête.
 2. **Bonus reranking** : `+0.15` si >= 2 tags matchent, `+0.08` si 1 seul, `+0.10` si ville exacte.
 
-Si les tags inferres sont trop restrictifs (0 resultat), un fallback automatique relance sans filtre de tags.
+Si les tags inferres sont trop restrictifs (0 résultat), un fallback automatique relance sans filtre de tags.
 
 ### Inferences temporelles supportees
 
-| Categorie | Exemples reconnus |
+| Catégorie | Exemples reconnus |
 |---|---|
-| Deictiques relatifs | *ce soir, demain, apres-demain, ce week-end, cette semaine, semaine prochaine* |
-| Soirs | *demain soir, apres-demain soir, ce soir* |
+| Déictiques relatifs | *ce soir, demain, après-demain, ce week-end, cette semaine, semaine prochaine* |
+| Soirs | *demain soir, après-demain soir, ce soir* |
 | Mois explicites | *en mai, en mai 2026, pour juin, au mois de mars 2027* |
 | Saisons | *en ete, cet ete, en ete 2026, au printemps, en automne, en hiver 2026* |
 
 ### Expanders de bas de page (aide contextuelle)
 
-- **📚 Comment le bot fonctionne** : flux complet avec les 3 guardrails et les etapes du pipeline.
-- **🔧 Construction du prompt envoye au LLM** : prompt systeme verbatim, format du contexte, role de k, de la temperature et des tags.
-- **📏 Comment lire les indicateurs de fiabilite** : guide detaille de chaque metrique.
+- **📚 Comment le bot fonctionne** : flux complet avec les 3 guardrails et les étapes du pipeline.
+- **🔧 Construction du prompt envoye au LLM** : prompt système verbatim, format du contexte, role de k, de la temperature et des tags.
+- **📏 Comment lire les indicateurs de fiabilite** : guide detaille de chaque métrique.
 
 ### Limites de l'interface
 
-- Pas de memoire inter-sessions (l'historique est perdu a la fermeture).
-- Pas de filtre geographique manuel (la ville est inferee depuis la question).
-- La recherche sans expression temporelle n'est pas contrainte dans le temps : les evenements passes peuvent remonter.
+- Pas de mémoire inter-sessions (l'historique est perdu a la fermeture).
+- Pas de filtre géographique manuel (la ville est inferee depuis la question).
+- La recherche sans expression temporelle n'est pas contrainte dans le temps : les événements passes peuvent remonter.
 
-## Evaluation RAGAS (hallucinations et fiabilite)
+## Évaluation RAGAS (hallucinations et fiabilite)
 
-Cette section mesure objectivement la qualite generation/retrieval **apres** ajout du filtrage intentions/tags et des fallbacks.
+Cette section mesure objectivement la qualité génération/retrieval **après** ajout du filtrage intentions/tags et des fallbacks.
 
-### Metriques utilisees
+### Métriques utilisees
 
 - `faithfulness`
 - `context_utilization`
@@ -1356,11 +1356,11 @@ Cette section mesure objectivement la qualite generation/retrieval **apres** ajo
 
 ### Protocole applique
 
-1. Jeu de 7 questions metier (question meteo retiree, question quantitative retiree car traitee par fallback).
-2. Passage de chaque question dans le pipeline reel (`MistralRAGChatbot.ask`).
-3. Capture de `answer` et `contexts` reellement recuperes.
-4. Construction d'une `ground_truth` silver (reference automatique basee uniquement sur les contextes).
-5. Evaluation RAGAS sur `question/answer/contexts/ground_truth`.
+1. Jeu de 7 questions métier (question meteo retiree, question quantitative retiree car traitee par fallback).
+2. Passage de chaque question dans le pipeline réel (`MistralRAGChatbot.ask`).
+3. Capture de `answer` et `contexts` reellement récupérés.
+4. Construction d'une `ground_truth` silver (référence automatique basee uniquement sur les contextes).
+5. Évaluation RAGAS sur `question/answer/contexts/ground_truth`.
 
 Script: `tools/diagnostic/ragas_eval_pull_events.py`
 
@@ -1372,14 +1372,14 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull
 
 ### Baseline (avant améliorations — 1 run)
 
-| Metrique | Score |
+| Métrique | Score |
 | --- | ---: |
 | `faithfulness` | 0.5932 |
 | `context_utilization` | 0.9062 |
 | `context_precision` | 0.6238 |
 | `context_recall` | 0.8524 |
 
-### Resultats post-améliorations (3 runs — moyenne ± écart-type, rerun du 28/04/2026)
+### Résultats post-améliorations (3 runs — moyenne ± écart-type, rerun du 28/04/2026)
 
 Commande de reproduction :
 
@@ -1390,7 +1390,7 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull
   --k 6 --runs 3
 ```
 
-| Metrique | Moy. | ±std | Min | Max |
+| Métrique | Moy. | ±std | Min | Max |
 | --- | ---: | ---: | ---: | ---: |
 | `faithfulness` | 0.9122 | 0.0621 | 0.8571 | 0.9796 |
 | `context_utilization` | 0.7165 | 0.0187 | 0.6950 | 0.7284 |
@@ -1400,7 +1400,7 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull
 
 ### Tableau des gains (baseline → post-améliorations)
 
-| Metrique | Baseline | Post-amélio | Delta | % |
+| Métrique | Baseline | Post-amélio | Delta | % |
 | --- | ---: | ---: | ---: | ---: |
 | `faithfulness` | 0.5932 | **0.9122** | **+0.3190** | **+53.8% ✅** |
 | `context_utilization` | 0.9062 | 0.7165 | -0.1897 | -20.9% ⚠️ |
@@ -1415,17 +1415,17 @@ Les 3 runs ci-dessus correspondent au pipeline courant, après correctif du filt
 
 Correctif applique ensuite dans `search_hybrid` :
 
-- conserver un evenement si son intervalle `[event_start, event_end]` croise la fenetre `[after_date, before_date]`;
+- conserver un événement si son intervalle `[event_start, event_end]` croise la fenêtre `[after_date, before_date]`;
 - equivalent logique : `event_end >= after_date` et `event_start <= before_date`.
 
-Ce correctif evite d'exclure a tort les evenements recurrents (date de debut ancienne, date de fin future), et corrige le cas `sortie en famille ce week-end` qui retournait 0 document.
+Ce correctif evite d'exclure a tort les événements recurrents (date de debut ancienne, date de fin future), et corrige le cas `sortie en famille ce week-end` qui retournait 0 document.
 
 **Note** : la variabilité inter-runs reste moderee (std ≤ 0.07), avec une stabilite particulierement bonne sur `context_utilization`.
 
 ### Limitation technique — answer_relevancy desactivee en version prod
 
 - `answer_relevancy` est conservee en commentaire dans le script et sera reactivee ulterieurement.
-- Le choix prod actuel privilegie des metriques stables et reproductibles avec l'environnement present.
+- Le choix prod actuel privilegie des métriques stables et reproductibles avec l'environnement present.
 
 ## Améliorations RAG implémentées (phase 2)
 
@@ -1489,7 +1489,7 @@ Expressions reconnues :
 
 Pour les mois explicites, la fenêtre est calculée sur le mois entier (du 1er au dernier jour). Si l'année est absente, l'année courante est utilisée ; si le mois est déjà passé, l'année suivante est automatiquement inférée.
 
-Le filtrage date est applique via recouvrement d'intervalle (`event_start` / `event_end`) pour ne pas exclure les evenements encore en cours.
+Le filtrage date est applique via recouvrement d'intervalle (`event_start` / `event_end`) pour ne pas exclure les événements encore en cours.
 
 Un fallback automatique sans filtre de tags est en place (`ask()` retry avec `tags=None`) mais pas sans filtre temporel — si le corpus ne contient aucun événement dans la fenêtre détectée, 0 résultats seront retournés.
 
@@ -1512,25 +1512,25 @@ Un fallback automatique sans filtre de tags est en place (`ask()` retry avec `ta
 
 ### Ce qui est techniquement solide dans la solution
 
-1. la collecte est defensive et filtre deja fortement le bruit,
+1. la collecte est defensive et filtre déjà fortement le bruit,
 2. le corpus final est compact et bien aligne avec la vectorisation,
 3. l'index exact FAISS est simple a valider et tres rapide,
-4. la recherche hybride repose sur des metadonnees directement exploitables,
-5. la suite de tests couvre la qualite du JSONL, le chargement de l'index, la recherche et une partie de la performance.
+4. la recherche hybride repose sur des métadonnées directement exploitables,
+5. la suite de tests couvre la qualité du JSONL, le chargement de l'index, la recherche et une partie de la performance.
 
 ### Ce qui merite d'etre surveille
 
-1. les variantes d'ecriture de region restent visibles dans les stats,
-2. l'efficacite du filtre temporel depend de la qualite des champs `event_start`/`event_end`,
-3. la CLI chatbot expose bien les fenetres deictiques (`--verbose`) mais pas encore un mode de fallback temporel automatique,
-4. certains attributs metier comme la gratuite ne sont pas modelises comme filtres metadata natifs.
+1. les variantes d'écriture de region restent visibles dans les stats,
+2. l'efficacite du filtre temporel depend de la qualité des champs `event_start`/`event_end`,
+3. la CLI chatbot expose bien les fenêtres déictiques (`--verbose`) mais pas encore un mode de fallback temporel automatique,
+4. certains attributs métier comme la gratuite ne sont pas modelises comme filtres metadata natifs.
 
 ## Pistes d'amélioration futures
 
 1. ~~**Mois explicites dans le filtre temporel**~~ ✅ *Implémenté le 27/04/2026 — `temporal_deixis.py` gère désormais "en mai 2026", "pour juin", "au mois de mars", etc.*
 2. ~~**Détection des requêtes trop générales**~~ ✅ *Implémenté le 28/04/2026 — `_is_too_broad_question` détecte et refuse les requêtes sans filtre utile.*
 3. **Fallback temporel** : si le filtre temporel auto retourne 0 docs, relancer sans filtre de dates (corpus historique).
-4. **Re-run RAGAS post-correctif date** : mesurer proprement le gain apres correction du chevauchement d'intervalle.
+4. **Re-run RAGAS post-correctif date** : mesurer proprement le gain après correction du chevauchement d'intervalle.
 5. **`answer_relevancy`** : réactiver la métrique RAGAS quand la version >= 0.2.x sera compatible avec l'environnement.
 6. **Gratuit comme filtre metadata natif** : modéliser la gratuité comme attribut booléen dans les métadonnées FAISS.
 7. **Corpus vivant** : pipeline de mise à jour incrémentale pour que le corpus reste à jour avec les événements futurs.
@@ -1539,7 +1539,7 @@ Un fallback automatique sans filtre de tags est en place (`ask()` retry avec `ta
 
 ### Pourquoi ne pas l'implementer dans ce lot de travaux
 
-Le besoin explicite de ce lot de travaux est de corriger la fenetre de collecte et de documenter la solution sans ouvrir un chantier de modification fonctionnelle plus large. Le chainage temporel chatbot est une amelioration adjacente, utile, mais distincte de la correction de la collecte.
+Le besoin explicite de ce lot de travaux est de corriger la fenêtre de collecte et de documenter la solution sans ouvrir un chantier de modification fonctionnelle plus large. Le chainage temporel chatbot est une amelioration adjacente, utile, mais distincte de la correction de la collecte.
 
 ## Conclusion
 
@@ -1547,13 +1547,13 @@ La solution est maintenant documentee de bout en bout.
 
 Les points a retenir sont les suivants :
 
-- la fenetre de collecte source a ete corrigee vers `25/04/2025 -> 25/04/2027`,
-- le corpus a ete regenere sur cette fenetre : 8014 documents RAG, 8014 vecteurs, index FAISS 31.30 MB,
+- la fenêtre de collecte source a ete corrigee vers `25/04/2025 -> 25/04/2027`,
+- le corpus a ete régénéré sur cette fenêtre : 8014 documents RAG, 8014 vecteurs, index FAISS 31.30 MB,
 - la validation technique ne montre aucune regression sur le pipeline existant (41/41 tests PASS),
-- les artefacts regeneres sont coherents a 100%,
-- la recherche hybride est solide sur les criteres thematiques et geographiques,
-- les reponses chatbot sur festivals d'ete et spectacles locaux sont meilleures sur le corpus elargi,
-- le chainage temporel deictique est actif, avec filtre par chevauchement d'intervalle pour la recherche datee.
+- les artefacts régénérés sont cohérents a 100%,
+- la recherche hybride est solide sur les critères thematiques et géographiques,
+- les réponses chatbot sur festivals d'ete et spectacles locaux sont meilleures sur le corpus elargi,
+- le chainage temporel déictique est actif, avec filtre par chevauchement d'intervalle pour la recherche datee.
 
 ## Annexes utiles
 
@@ -1571,7 +1571,7 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe chatbot_cli.py --question "as-tu un concert de jazz a Paris ?"
 ```
 
-### Artefacts de reference
+### Artefacts de référence
 
 - `data/evenements_publics_openagenda_culture_ile_de_france_rag.jsonl`
 - `data/evenements_publics_openagenda_culture_ile_de_france_vectors.jsonl`
