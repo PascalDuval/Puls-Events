@@ -11,3 +11,9 @@ __pycache__/
 # Environnements / secrets
 .env
 .env.*
+
+# Artefacts locaux non versionnes
+tests/manual/artifacts/*.json
+data/Note+de+cadrage+_+POC+Avantages+Sportif_page2_image.jpg
+docstring-ex.py
+tools/secondary/add_accents_readme.py
