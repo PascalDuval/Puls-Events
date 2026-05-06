@@ -455,6 +455,68 @@ L'interface s'ouvre automatiquement dans le navigateur a l'adresse `http://local
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_faiss_indexing.py -q
 ```
 
+## Architecture de la recherche hybride
+
+### Principe général
+
+La recherche hybride combine deux mécanismes complémentaires : la **similarité sémantique vectorielle** (FAISS) et le **filtrage par attributs métier** (métadonnées). Ni l'un ni l'autre n'est suffisant seul — FAISS sans filtre peut remonter des événements hors périmètre géographique ou temporel, et les filtres seuls ne comprennent pas le sens d'une question en langage naturel.
+
+### Les deux composants de stockage
+
+**Index FAISS (`IndexFlatL2`)**
+FAISS stocke les vecteurs numériques (embeddings) de 1024 dimensions générés par Mistral. Chaque événement y est représenté sous forme d'un point dans un espace mathématique à haute dimension. La distance utilisée est la **distance L2 (euclidienne)** : deux vecteurs proches signifient deux événements sémantiquement similaires. FAISS ne connaît que des nombres — il ignore totalement le titre, la ville ou la date d'un événement.
+
+**Fichiers Pickle (`faiss_metadata.pkl`, `faiss_id_mapping.pkl`)**
+Les fichiers Pickle stockent les **métadonnées lisibles** : titre, ville, date, tags, URL source. Un second fichier assure la **correspondance entre l'indice FAISS** (un entier de 0 à N) **et la fiche réelle** dans le corpus. Sans ce mapping, les identifiants retournés par FAISS ne peuvent pas être reliés à un événement concret.
+
+### Déroulement d'une requête hybride
+
+```
+Question utilisateur
+        │
+        ▼
+[1] Embedding Mistral
+    La question est convertie en vecteur de 1024 dimensions.
+        │
+        ▼
+[2] Recherche vectorielle FAISS (top-100)
+    FAISS calcule les 100 vecteurs les plus proches (distance L2).
+    → Résultat : 100 identifiants internes + leurs scores de distance.
+        │
+        ▼
+[3] Résolution via ID mapping
+    Chaque identifiant FAISS est traduit en fiche événement réelle
+    grâce au fichier faiss_id_mapping.pkl.
+        │
+        ▼
+[4] Filtrage métier (optionnel, mode strict)
+    Sur les 100 candidats sémantiques, on applique des filtres sur :
+    - ville ou région (ex. : Paris, Île-de-France)
+    - fenêtre temporelle (ex. : "ce week-end" → UTC calculé par temporal_deixis.py)
+    - tags (ex. : jazz, famille, exposition)
+        │
+        ▼
+[5] Retour des top-10 résultats filtrés
+    Les fiches survivantes, classées par score sémantique, sont transmises
+    au LLM Mistral pour la génération de la réponse finale.
+```
+
+### Pourquoi top-100 avant filtrage ?
+
+Sur-recruter 100 candidats sémantiques avant de filtrer est une pratique standard en RAG hybride. Elle garantit que les filtres métier ont une population suffisante même lorsque les événements pertinents sont rares dans le corpus (ex. : peu d'événements tagués "famille" à une date précise). Retourner directement les top-10 sans sur-recrutement risquerait d'éliminer tous les bons candidats dès l'étape FAISS.
+
+### Résumé des caractéristiques techniques
+
+| Composant | Rôle | Format | Clé technique |
+|---|---|---|---|
+| `faiss_index.idx` | Recherche sémantique rapide | Index binaire FAISS | Distance L2, 1024 dims, ~40 MB |
+| `faiss_metadata.pkl` | Attributs lisibles des événements | Pickle Python | Titre, ville, date, tags, URL |
+| `faiss_id_mapping.pkl` | Lien index FAISS ↔ fiche réelle | Pickle Python | Indice entier → dict événement |
+
+> En résumé : FAISS cherche par **sens**, les Pickles fournissent le **contexte lisible**, et les filtres métier **affinent la précision** selon les contraintes de la question. C'est cette combinaison qui permet un moteur à la fois rapide, sémantiquement pertinent et exploitable en production.
+
+---
+
 ## Description des fichiers et dossiers
 
 ### Fichiers principaux a la racine
@@ -944,6 +1006,15 @@ doc_tags & filter_tags   # au moins 1 tag commun -> garde
 
 ## Pourquoi `IndexFlatL2` a ete choisi
 
+Une fois les événements vectorisés (embeddings 1024D), il faut stocker et interroger ces vecteurs rapidement.
+
+FAISS est conçu pour :
+
+- la recherche par similarité vectorielle (k plus proches voisins),
+- des performances élevées sur CPU (SIMD, bibliothèques numériques selon build) et sur GPU (version FAISS GPU),
+- la scalabilité (de quelques milliers à plusieurs millions de vecteurs),
+- la flexibilité via plusieurs familles d'index (`Flat`, `IVF`, `HNSW`) selon le compromis latence / rappel / mémoire.
+
 ### Justification fonctionnelle
 
 Le choix de `IndexFlatL2` est defensable ici pour quatre raisons :
@@ -952,6 +1023,14 @@ Le choix de `IndexFlatL2` est defensable ici pour quatre raisons :
 2. la recherche exacte est déjà tres rapide,
 3. l'absence d'approximation simplifie le debug et la validation,
 4. on evite la complexité de paramétrage d'indexes approximatifs alors que le gain n'est pas nécessaire a cette echelle.
+
+### Comparatif synthétique des index FAISS
+
+| Approche | Performance (ordre de grandeur) | Cas d'usage | Remarque |
+| --- | --- | --- | --- |
+| `IndexFlatL2` | Recherche exacte exhaustive, coût ~ `O(N x D)` par requête | Petits et moyens corpus (jusqu'a ~100k selon SLA) | Très simple, rappel maximal, mémoire ~ `4 x N x D` bytes |
+| `IndexIVFFlat` | Recherche approximative (partition en listes), coût dépend de `nlist` et `nprobe` | Gros volumes (souvent >=100k / millions) | Plus rapide si bien réglé, mais nécessite entraînement et tuning |
+| `IndexHNSWFlat` | Recherche approximative par graphe, excellente latence et haut rappel | Volumes moyens a gros avec forte contrainte de latence | Très bon compromis latence/rappel, mais surcoût mémoire du graphe |
 
 ### Mini-benchmark comparatif sur les artefacts courants
 
