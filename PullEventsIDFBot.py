@@ -9,11 +9,21 @@ Version alignée avec le bot RAG actuel:
 from __future__ import annotations
 
 import logging
+import os
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
+
+# Charger le .env local avant tout import qui lirait MISTRAL_API_KEY
+_env_path = Path(__file__).resolve().parent / ".env"
+if _env_path.exists():
+    for _line in _env_path.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ[_k.strip()] = _v.strip().strip('"').strip("'")
 
 import streamlit as st
 
@@ -376,7 +386,6 @@ if search_clicked and user_prompt.strip():
             logger.info("Nouvelle requete utilisateur: %s", user_prompt)
             chatbot_temp = MistralRAGChatbot(
                 searcher=faiss_searcher,
-                client=rag_chatbot.client,
                 temperature=temperature,
             )
 

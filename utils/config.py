@@ -4,6 +4,26 @@ import os
 from pathlib import Path
 
 
+def _is_placeholder_key(value: str) -> bool:
+    if not value:
+        return True
+    normalized = value.strip().lower()
+    known_placeholders = {
+        "your_mistral_api_key_here",
+        "changeme",
+        "change_me",
+        "replace_me",
+        "none",
+        "null",
+    }
+    if normalized in known_placeholders:
+        return True
+    # Cle de demo observee dans des exercices: ne pas l'utiliser en production.
+    if normalized.startswith("x75slf"):
+        return True
+    return False
+
+
 def _load_env_value(path: Path, key: str) -> str:
     if not path.exists() or not path.is_file():
         return ""
@@ -20,10 +40,19 @@ def _load_env_value(path: Path, key: str) -> str:
 def get_mistral_api_key() -> str:
     # Priorite: variable d'environnement puis fichier .env local du projet.
     value = os.getenv("MISTRAL_API_KEY", "").strip()
-    if value:
+    if value and not _is_placeholder_key(value):
         return value
-    project_env = Path(__file__).resolve().parents[1] / ".env"
-    return _load_env_value(project_env, "MISTRAL_API_KEY")
+
+    current = Path(__file__).resolve()
+    env_candidates = [
+        current.parents[1] / ".env",  # Pull-Events/.env
+        current.parents[2] / ".env",  # racine du workspace
+    ]
+    for env_path in env_candidates:
+        file_value = _load_env_value(env_path, "MISTRAL_API_KEY")
+        if file_value and not _is_placeholder_key(file_value):
+            return file_value
+    return ""
 
 
 MISTRAL_API_KEY = get_mistral_api_key()

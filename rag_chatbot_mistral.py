@@ -6,10 +6,11 @@ import re
 from typing import Any, Dict, List, Optional
 import unicodedata
 
-from mistralai.client import MistralClient
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_mistralai import ChatMistralAI, MistralAIEmbeddings
 
 from faiss_searcher import FAISSSearcher
-from utils.config import MISTRAL_API_KEY
+from utils.config import get_mistral_api_key
 from utils.temporal_deixis import infer_temporal_window
 
 
@@ -165,7 +166,8 @@ class MistralRAGChatbot:
         top_p: float = DEFAULT_TOP_P,
         max_tokens: int = DEFAULT_MAX_TOKENS,
         searcher: Optional[FAISSSearcher] = None,
-        client: Optional[MistralClient] = None,
+        embeddings: Optional[Any] = None,
+        llm: Optional[Any] = None,
     ) -> None:
         self.model = model
         self.embedding_model = embedding_model
@@ -173,13 +175,23 @@ class MistralRAGChatbot:
         self.top_p = top_p
         self.max_tokens = max_tokens
         self.searcher = searcher or FAISSSearcher(index_dir=index_dir, verbose=False)
-        resolved_api_key = (api_key or MISTRAL_API_KEY).strip()
-        if not resolved_api_key:
+        resolved_api_key = (api_key or get_mistral_api_key()).strip()
+        if not resolved_api_key and not (embeddings and llm):
             raise RuntimeError(
                 "MISTRAL_API_KEY manquante. Definir la variable d'environnement "
                 "ou renseigner un fichier .env local."
             )
-        self.client = client or MistralClient(api_key=resolved_api_key)
+        self.embeddings = embeddings or MistralAIEmbeddings(
+            model=embedding_model,
+            mistral_api_key=resolved_api_key,
+        )
+        self.llm = llm or ChatMistralAI(
+            model=model,
+            mistral_api_key=resolved_api_key,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+        )
         self.available_tags = self._build_available_tags()
 
     def ask(
@@ -293,22 +305,25 @@ class MistralRAGChatbot:
     # ------------------------------------------------------------------
 
     def _embed(self, text: str) -> List[float]:
-        response = self.client.embeddings(model=self.embedding_model, input=[text])
-        return response.data[0].embedding
+        try:
+            return self.embeddings.embed_query(text)
+        except Exception as exc:
+            status_code = getattr(exc, "status_code", None)
+            is_auth_error = status_code == 401 or "unauthorized" in str(exc).lower()
+            if is_auth_error:
+                raise RuntimeError(
+                    "Authentification Mistral invalide (401 Unauthorized). "
+                    "Verifiez MISTRAL_API_KEY dans l'environnement ou Pull-Events/.env."
+                ) from exc
+            raise
 
     def _generate(self, question: str, context: str) -> str:
         messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Question: {question}\n\nContexte:\n{context}"},
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content=f"Question: {question}\n\nContexte:\n{context}"),
         ]
-        response = self.client.chat(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            max_tokens=self.max_tokens,
-        )
-        return response.choices[0].message.content.strip()
+        response = self.llm.invoke(messages)
+        return response.content.strip()
 
     @staticmethod
     def _format_context(docs: List[Dict[str, Any]]) -> str:

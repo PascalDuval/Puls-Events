@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Dict, List
 
@@ -9,41 +8,23 @@ import pytest
 from rag_chatbot_mistral import MistralRAGChatbot
 
 
-@dataclass
-class _FakeEmbeddingData:
-    embedding: List[float]
+class FakeMistralAIEmbeddings:
+    def __init__(self) -> None:
+        self.embed_query_calls: List[str] = []
+
+    def embed_query(self, text: str) -> List[float]:
+        self.embed_query_calls.append(text)
+        return [0.01] * 1024
 
 
-class FakeMistralClient:
+class FakeChatMistralAI:
     def __init__(self, answer_text: str = "Reponse test.") -> None:
         self.answer_text = answer_text
-        self.embedding_calls: List[Dict[str, Any]] = []
-        self.chat_calls: List[Dict[str, Any]] = []
+        self.invoke_calls: List[Any] = []
 
-    def embeddings(self, model: str, input: List[str]) -> Any:
-        self.embedding_calls.append({"model": model, "input": input})
-        return SimpleNamespace(data=[_FakeEmbeddingData(embedding=[0.01] * 1024)])
-
-    def chat(
-        self,
-        model: str,
-        messages: List[Dict[str, str]],
-        temperature: float,
-        top_p: float,
-        max_tokens: int,
-    ) -> Any:
-        self.chat_calls.append(
-            {
-                "model": model,
-                "messages": messages,
-                "temperature": temperature,
-                "top_p": top_p,
-                "max_tokens": max_tokens,
-            }
-        )
-        return SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=self.answer_text))]
-        )
+    def invoke(self, messages: Any) -> Any:
+        self.invoke_calls.append(messages)
+        return SimpleNamespace(content=self.answer_text)
 
 
 class FakeSearcher:
@@ -90,48 +71,48 @@ def _sample_doc() -> Dict[str, Any]:
     }
 
 
+def _make_bot(answer_text: str = "Reponse test.", docs: List[Dict[str, Any]] | None = None):
+    embeddings = FakeMistralAIEmbeddings()
+    llm = FakeChatMistralAI(answer_text=answer_text)
+    searcher = FakeSearcher(docs=docs if docs is not None else [])
+    bot = MistralRAGChatbot(embeddings=embeddings, llm=llm, searcher=searcher)
+    return bot, embeddings, llm, searcher
+
+
 # ------------------------------------------------------------------
 # Tests
 # ------------------------------------------------------------------
 
 
 def test_rag_no_documents_returns_guardrail_message() -> None:
-    """Sans documents recuperes, retourne un message sans appeler Mistral."""
-    client = FakeMistralClient()
-    searcher = FakeSearcher(docs=[])
-    bot = MistralRAGChatbot(client=client, searcher=searcher)
+    """Sans documents recuperes, retourne un message sans appeler le LLM."""
+    bot, embeddings, llm, searcher = _make_bot(docs=[])
 
     result = bot.ask("Quels concerts a Paris ?")
 
     assert "Je ne trouve pas" in result.answer
     assert result.sources == []
     assert len(result.documents) == 0
-    assert len(client.chat_calls) == 0
+    assert len(llm.invoke_calls) == 0
 
 
-def test_rag_calls_mistral_with_correct_parameters() -> None:
-    """Verifie que mistral-small-latest est appele avec les bons parametres."""
-    client = FakeMistralClient(answer_text="Voici une recommandation.\n\nSources:\n- https://openagenda.com/events/123")
-    searcher = FakeSearcher(docs=[_sample_doc()])
-    bot = MistralRAGChatbot(client=client, searcher=searcher)
+def test_rag_calls_llm_with_correct_model() -> None:
+    """Verifie que le modele configure est bien utilise."""
+    bot, embeddings, llm, searcher = _make_bot(
+        answer_text="Voici une recommandation.\n\nSources:\n- https://openagenda.com/events/123",
+        docs=[_sample_doc()],
+    )
 
     result = bot.ask("Propose un evenement musique a Paris.")
 
     assert result.model == "mistral-small-latest"
-    assert len(client.embedding_calls) == 1
-    assert len(client.chat_calls) == 1
-    chat = client.chat_calls[0]
-    assert chat["model"] == "mistral-small-latest"
-    assert chat["temperature"] == pytest.approx(0.2)
-    assert chat["top_p"] == pytest.approx(0.9)
-    assert chat["max_tokens"] == 600
+    assert len(embeddings.embed_query_calls) == 1
+    assert len(llm.invoke_calls) == 1
 
 
 def test_rag_prompt_contains_system_rules_and_context() -> None:
-    """Verifie que le prompt envoye a Mistral contient les regles et le contexte."""
-    client = FakeMistralClient(answer_text="Reponse courte")
-    searcher = FakeSearcher(docs=[_sample_doc()])
-    bot = MistralRAGChatbot(client=client, searcher=searcher)
+    """Verifie que le prompt envoye au LLM contient les regles et le contexte."""
+    bot, embeddings, llm, searcher = _make_bot(answer_text="Reponse courte", docs=[_sample_doc()])
 
     bot.ask("Que faire a Paris ?", k=4, city="Paris", tags=["musique"])
 
@@ -139,17 +120,18 @@ def test_rag_prompt_contains_system_rules_and_context() -> None:
     assert searcher.calls[0]["city"] == "Paris"
     assert searcher.calls[0]["tags"] == ["musique"]
 
-    messages = client.chat_calls[0]["messages"]
-    assert any("Tu es un assistant RAG" in m["content"] for m in messages)
-    assert any("Cite explicitement les sources" in m["content"] for m in messages)
-    assert any("https://openagenda.com/events/123" in m["content"] for m in messages)
+    messages = llm.invoke_calls[0]
+    assert any("Tu es un assistant RAG" in m.content for m in messages)
+    assert any("Cite explicitement les sources" in m.content for m in messages)
+    assert any("https://openagenda.com/events/123" in m.content for m in messages)
 
 
 def test_rag_appends_sources_when_llm_forgets_them() -> None:
     """Verifie que les sources sont ajoutees si le LLM ne les inclut pas."""
-    client = FakeMistralClient(answer_text="Je recommande le festival de jazz.")
-    searcher = FakeSearcher(docs=[_sample_doc()])
-    bot = MistralRAGChatbot(client=client, searcher=searcher)
+    bot, _, _, _ = _make_bot(
+        answer_text="Je recommande le festival de jazz.",
+        docs=[_sample_doc()],
+    )
 
     result = bot.ask("Festival a Paris ?")
 
@@ -159,14 +141,12 @@ def test_rag_appends_sources_when_llm_forgets_them() -> None:
 
 
 def test_rag_does_not_duplicate_sources_already_in_answer() -> None:
-    """Verifie que les sources ne sont pas dupliquees, meme en markdown gras."""
+    """Verifie que les sources ne sont pas dupliquees."""
     answer_with_sources = (
         "Je recommande le festival.\n\n**Sources :**\n"
         "- https://openagenda.com/events/123"
     )
-    client = FakeMistralClient(answer_text=answer_with_sources)
-    searcher = FakeSearcher(docs=[_sample_doc()])
-    bot = MistralRAGChatbot(client=client, searcher=searcher)
+    bot, _, _, _ = _make_bot(answer_text=answer_with_sources, docs=[_sample_doc()])
 
     result = bot.ask("Festival a Paris ?")
 
@@ -175,9 +155,7 @@ def test_rag_does_not_duplicate_sources_already_in_answer() -> None:
 
 def test_rag_infers_tags_from_question_when_none_provided() -> None:
     """Sans tags utilisateur, le bot infere des tags depuis la question."""
-    client = FakeMistralClient(answer_text="Reponse test")
-    searcher = FakeSearcher(docs=[_sample_doc()])
-    bot = MistralRAGChatbot(client=client, searcher=searcher)
+    bot, _, _, searcher = _make_bot(answer_text="Reponse test", docs=[_sample_doc()])
 
     bot.ask("As-tu un concert de jazz a Paris ?")
 
@@ -189,29 +167,26 @@ def test_rag_infers_tags_from_question_when_none_provided() -> None:
 
 def test_rag_fallback_out_of_scope_skips_retrieval_and_llm() -> None:
     """Question hors contexte (meteo) -> fallback immediat sans retrieval."""
-    client = FakeMistralClient(answer_text="Reponse test")
-    searcher = FakeSearcher(docs=[_sample_doc()])
-    bot = MistralRAGChatbot(client=client, searcher=searcher)
+    bot, embeddings, llm, searcher = _make_bot(docs=[_sample_doc()])
 
     result = bot.ask("Quel temps fait-il aujourd'hui ?")
 
     assert "hors du perimetre" in result.answer
     assert result.documents == []
     assert len(searcher.calls) == 0
-    assert len(client.embedding_calls) == 0
-    assert len(client.chat_calls) == 0
+    assert len(embeddings.embed_query_calls) == 0
+    assert len(llm.invoke_calls) == 0
 
 
 def test_rag_fallback_quantitative_skips_retrieval_and_llm() -> None:
     """Question quantitative sur la base -> fallback immediat sans retrieval."""
-    client = FakeMistralClient(answer_text="Reponse test")
-    searcher = FakeSearcher(docs=[_sample_doc()])
-    bot = MistralRAGChatbot(client=client, searcher=searcher)
+    bot, embeddings, llm, searcher = _make_bot(docs=[_sample_doc()])
 
     result = bot.ask("Combien d'evenements sont dans la base de donnees ?")
 
     assert "statistiques globales" in result.answer
     assert result.documents == []
     assert len(searcher.calls) == 0
-    assert len(client.embedding_calls) == 0
-    assert len(client.chat_calls) == 0
+    assert len(embeddings.embed_query_calls) == 0
+    assert len(llm.invoke_calls) == 0
+

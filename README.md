@@ -93,6 +93,46 @@ Le projet couvre toute la chaine technique suivante :
 6. recherche hybride vecteur + métadonnées,
 7. réponse chatbot guidee par les documents récupérés.
 
+## Implementation LangChain (mise a jour mai 2026)
+
+Le moteur RAG utilise maintenant les wrappers LangChain pour Mistral dans `rag_chatbot_mistral.py`.
+
+### Ce qui a change dans le code
+
+- Avant : usage direct du SDK `mistralai` via `MistralClient`.
+- Maintenant :
+  - embeddings via `MistralAIEmbeddings.embed_query(...)`
+  - generation via `ChatMistralAI.invoke(...)`
+  - messages typés LangChain (`SystemMessage`, `HumanMessage`)
+
+Concretement, la classe `MistralRAGChatbot` garde la meme API publique (`ask(...)`) et la meme logique metier (guardrails, filtres, retrieval FAISS), mais la couche d'appel au modele est uniformisee via LangChain.
+
+### Pourquoi ce choix
+
+- Clarifier la separation retrieval / prompt / generation.
+- Faciliter l'evolution vers des chains plus riches (prompt templates, callbacks, tracing) sans casser l'existant.
+- Ameliorer la testabilite avec injection de dependances (`embeddings=` et `llm=` dans les tests unitaires).
+
+### Compatibilite et comportement
+
+- Aucun changement de contrat pour `chatbot_cli.py` et `PullEventsIDFBot.py`.
+- Les erreurs d'authentification Mistral (`401 Unauthorized`) restent converties en message explicite cote application.
+- La recherche hybride FAISS (top-k + filtres ville/region/date/tags) est inchangee.
+
+### Dependances ajoutees/maintenues
+
+- `langchain==0.3.23`
+- `langchain-mistralai==0.1.13`
+- `mistralai==0.4.2`
+
+### Exemple de flux interne
+
+1. Question utilisateur.
+2. `embed_query` calcule le vecteur de requete.
+3. FAISS + metadonnees recuperent les documents pertinents.
+4. Contexte assemble + messages system/user.
+5. `ChatMistralAI.invoke(...)` produit la reponse finale.
+
 
 
 ## Résumé executif
@@ -197,7 +237,9 @@ Les composants les plus importants sont :
 
 - `requests` pour la collecte OpenAgenda,
 - `python-dateutil` pour le parsing robuste des dates,
-- `mistralai` pour les embeddings et la génération,
+- `langchain` pour l'orchestration de la couche LLM,
+- `langchain-mistralai` pour les wrappers Mistral (chat + embeddings),
+- `mistralai` comme SDK sous-jacent de l'integration,
 - `faiss-cpu` pour l'index vectoriel,
 - `numpy` pour la manipulation des embeddings,
 - `pytest` pour la validation.
@@ -324,9 +366,9 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test
 
 #### Détail des tests unitaires par étape logique (23 tests)
 
-1. Étape 1 - Dépendances et imports (3 tests)
+1. Étape 1 - Couche LangChain (3 tests)
 Scripts de test :
-- `tests/unit/test_imports.py`
+- `tests/unit/test_langchain_chain.py`
 
 2. Étape 2 - Parsing temporel (6 tests)
 Scripts de test :
@@ -348,10 +390,10 @@ Scripts de test :
 Scripts de test :
 - `tests/unit/test_vectorize_events_mistral.py`
 
-Vérification du total : 3 + 6 + 5 + 2 + 6 + 1 = 23 tests unitaires.
+Verification du total : 3 + 6 + 5 + 2 + 6 + 1 = 23 tests unitaires.
 
 Note de répartition par script :
-- `tests/unit/test_imports.py` : 3 tests
+- `tests/unit/test_langchain_chain.py` : 3 tests
 - `tests/unit/test_temporal_deixis.py` : 6 tests
 - `tests/unit/test_vectorize_events_mistral.py` : 6 tests (dont la résolution de clé API)
 - `tests/unit/test_rag_chatbot_mistral.py` : 8 tests (dont 2 guardrails)

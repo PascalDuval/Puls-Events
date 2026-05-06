@@ -37,16 +37,20 @@ def main() -> None:
         else:
             print("[verbose] Aucune fenetre temporelle detectee dans la question.")
 
-    bot = MistralRAGChatbot()
-    result = bot.ask(
-        question=args.question,
-        k=args.k,
-        city=args.city,
-        region=args.region,
-        tags=_split_csv(args.tags),
-        after_date=args.after_date,
-        before_date=args.before_date,
-    )
+    try:
+        bot = MistralRAGChatbot()
+        result = bot.ask(
+            question=args.question,
+            k=args.k,
+            city=args.city,
+            region=args.region,
+            tags=_split_csv(args.tags),
+            after_date=args.after_date,
+            before_date=args.before_date,
+        )
+    except Exception as exc:
+        print(f"Erreur: {exc}")
+        return
 
     if args.verbose:
         print(f"[verbose] Documents recuperes : {len(result.documents)}")
