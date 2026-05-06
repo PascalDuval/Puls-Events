@@ -9,10 +9,10 @@ import unicodedata
 from mistralai.client import MistralClient
 
 from faiss_searcher import FAISSSearcher
+from utils.config import MISTRAL_API_KEY
 from utils.temporal_deixis import infer_temporal_window
 
 
-DEFAULT_MISTRAL_API_KEY = "x75SlFpLFfC3HjY7aDQ1Y9q9ZyQL865m"
 DEFAULT_LLM_MODEL = "mistral-small-latest"
 DEFAULT_EMBEDDING_MODEL = "mistral-embed"
 DEFAULT_TEMPERATURE = 0.2
@@ -158,7 +158,7 @@ class MistralRAGChatbot:
     def __init__(
         self,
         index_dir: str = "data",
-        api_key: str = DEFAULT_MISTRAL_API_KEY,
+        api_key: Optional[str] = None,
         model: str = DEFAULT_LLM_MODEL,
         embedding_model: str = DEFAULT_EMBEDDING_MODEL,
         temperature: float = DEFAULT_TEMPERATURE,
@@ -173,7 +173,13 @@ class MistralRAGChatbot:
         self.top_p = top_p
         self.max_tokens = max_tokens
         self.searcher = searcher or FAISSSearcher(index_dir=index_dir, verbose=False)
-        self.client = client or MistralClient(api_key=api_key)
+        resolved_api_key = (api_key or MISTRAL_API_KEY).strip()
+        if not resolved_api_key:
+            raise RuntimeError(
+                "MISTRAL_API_KEY manquante. Definir la variable d'environnement "
+                "ou renseigner un fichier .env local."
+            )
+        self.client = client or MistralClient(api_key=resolved_api_key)
         self.available_tags = self._build_available_tags()
 
     def ask(
