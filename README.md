@@ -95,43 +95,228 @@ Le projet couvre toute la chaine technique suivante :
 
 ## Implementation LangChain (mise a jour mai 2026)
 
-Le moteur RAG utilise maintenant les wrappers LangChain pour Mistral dans `rag_chatbot_mistral.py`.
+### Qu'est-ce que LangChain et a quoi ca sert ?
 
-### Ce qui a change dans le code
+LangChain est un framework Python open source concu pour construire des applications basees sur des modeles de langage (LLM).
+Son role n'est pas de fournir un modele lui-meme, mais d'offrir une **couche d'abstraction** au-dessus des SDK des differents fournisseurs (Mistral, OpenAI, Anthropic, Ollama, etc.).
 
-- Avant : usage direct du SDK `mistralai` via `MistralClient`.
-- Maintenant :
-  - embeddings via `MistralAIEmbeddings.embed_query(...)`
-  - generation via `ChatMistralAI.invoke(...)`
-  - messages typés LangChain (`SystemMessage`, `HumanMessage`)
+Concretement, LangChain standardise trois choses :
 
-Concretement, la classe `MistralRAGChatbot` garde la meme API publique (`ask(...)`) et la meme logique metier (guardrails, filtres, retrieval FAISS), mais la couche d'appel au modele est uniformisee via LangChain.
+| Ce qu'il normalise | Sans LangChain | Avec LangChain |
+|---|---|---|
+| Les messages | Dicts bruts `{"role": "user", "content": "..."}` | Objets typés `SystemMessage`, `HumanMessage` |
+| L'appel au LLM | `client.chat(model=..., messages=..., temperature=...)` | `llm.invoke(messages)` |
+| L'appel aux embeddings | `client.embeddings(model=..., input=[...])` | `embeddings.embed_query(text)` |
+
+L'avantage principal : si tu changes de fournisseur LLM, tu changes une ligne d'import et le constructeur. Le reste du code (guardrails, retrieval FAISS, format de reponse) n'est pas touche.
+
+### Comment LangChain est implemente dans ce projet
+
+Le seul fichier qui utilise LangChain est `rag_chatbot_mistral.py`.
+
+**Imports (lignes 9-10) :**
+
+```python
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_mistralai import ChatMistralAI, MistralAIEmbeddings
+```
+
+**Construction des objets dans `__init__` :**
+
+```python
+self.embeddings = MistralAIEmbeddings(
+    model="mistral-embed",
+    mistral_api_key=resolved_api_key,
+)
+self.llm = ChatMistralAI(
+    model="mistral-small-latest",
+    mistral_api_key=resolved_api_key,
+    temperature=0.2,
+    top_p=0.9,
+    max_tokens=600,
+)
+```
+
+**Appel embeddings dans `_embed()` :**
+
+```python
+return self.embeddings.embed_query(text)
+```
+
+**Appel LLM dans `_generate()` :**
+
+```python
+messages = [
+    SystemMessage(content=SYSTEM_PROMPT),
+    HumanMessage(content=f"Question: {question}\n\nContexte:\n{context}"),
+]
+response = self.llm.invoke(messages)
+return response.content.strip()
+```
+
+La logique metier (guardrails, inference de tags, filtres FAISS, deictiques temporels) est entierement dans `ask()` et n'est pas liee a LangChain. Les points d'entree `chatbot_cli.py` et `PullEventsIDFBot.py` appellent uniquement `bot.ask(...)` et ne savent pas quel provider est utilise.
+
+### Flux interne complet
+
+```
+Question utilisateur
+        │
+        ▼
+[1] Guardrails metier (hors-sujet, trop large, quantitatif)
+    → reponse immediate si detecte, sans appel LLM ni FAISS
+        │
+        ▼
+[2] Inference de tags + deictique temporel
+    → enrichissement automatique des filtres
+        │
+        ▼
+[3] MistralAIEmbeddings.embed_query(question)
+    → vecteur float[1024]
+        │
+        ▼
+[4] FAISSSearcher.search_hybrid(embedding, k, city, tags, dates)
+    → top-k documents pertinents
+        │
+        ▼
+[5] Assemblage du contexte texte
+        │
+        ▼
+[6] ChatMistralAI.invoke([SystemMessage, HumanMessage])
+    → reponse finale
+```
 
 ### Pourquoi ce choix
 
-- Clarifier la separation retrieval / prompt / generation.
-- Faciliter l'evolution vers des chains plus riches (prompt templates, callbacks, tracing) sans casser l'existant.
-- Ameliorer la testabilite avec injection de dependances (`embeddings=` et `llm=` dans les tests unitaires).
+- Separer clairement la couche metier (guardrails, tags, FAISS) de la couche modele.
+- Permette de changer de fournisseur LLM ou embedder sans toucher la logique RAG.
+- Faciliter les tests unitaires : `embeddings=` et `llm=` sont injectables directement dans le constructeur.
 
-### Compatibilite et comportement
-
-- Aucun changement de contrat pour `chatbot_cli.py` et `PullEventsIDFBot.py`.
-- Les erreurs d'authentification Mistral (`401 Unauthorized`) restent converties en message explicite cote application.
-- La recherche hybride FAISS (top-k + filtres ville/region/date/tags) est inchangee.
-
-### Dependances ajoutees/maintenues
+### Dependances
 
 - `langchain==0.3.23`
 - `langchain-mistralai==0.1.13`
-- `mistralai==0.4.2`
+- `mistralai==0.4.2` (SDK sous-jacent de l'integration LangChain Mistral)
 
-### Exemple de flux interne
+---
 
-1. Question utilisateur.
-2. `embed_query` calcule le vecteur de requete.
-3. FAISS + metadonnees recuperent les documents pertinents.
-4. Contexte assemble + messages system/user.
-5. `ChatMistralAI.invoke(...)` produit la reponse finale.
+## Comment migrer vers un autre LLM ou embedder
+
+Le projet est concu pour rendre cette migration simple grace a l'injection de dependances LangChain.
+
+### Cas 1 — Changer uniquement le LLM de generation (le plus simple)
+
+Tu gardes tes embeddings Mistral et ton index FAISS actuel. Seule la generation change.
+
+**Impact** : aucune regeneration d'index necessaire.
+
+**Exemple : migrer vers OpenAI GPT-4o**
+
+1. Installer le package :
+
+```bash
+pip install langchain-openai
+```
+
+2. Dans `requirements.txt`, remplacer ou ajouter :
+
+```
+langchain-openai>=0.1.0
+```
+
+3. Dans `rag_chatbot_mistral.py`, modifier les imports :
+
+```python
+# Avant
+from langchain_mistralai import ChatMistralAI, MistralAIEmbeddings
+
+# Apres
+from langchain_mistralai import MistralAIEmbeddings       # on garde l'embedder
+from langchain_openai import ChatOpenAI                    # nouveau LLM
+```
+
+4. Dans `__init__`, remplacer la construction du LLM :
+
+```python
+# Avant
+self.llm = ChatMistralAI(
+    model=model,
+    mistral_api_key=resolved_api_key,
+    temperature=temperature,
+    max_tokens=max_tokens,
+)
+
+# Apres
+self.llm = ChatOpenAI(
+    model="gpt-4o",
+    openai_api_key=resolved_api_key,   # ou os.getenv("OPENAI_API_KEY")
+    temperature=temperature,
+    max_tokens=max_tokens,
+)
+```
+
+5. Mettre a jour `.env` avec `OPENAI_API_KEY=sk-...` et `utils/config.py` si besoin.
+
+6. Lancer les tests : `pytest tests/unit -q` — aucun test ne doit casser (ils injectent des fakes).
+
+---
+
+### Cas 2 — Changer l'embedder (necessite une regeneration complete de l'index)
+
+**Attention** : changer d'embedder signifie que les vecteurs en base et les vecteurs de requete sont produits dans des espaces differents et donc incompatibles. Il faut obligatoirement regenerer les vecteurs et l'index FAISS.
+
+**Checklist de migration embedder :**
+
+- [ ] 1. Installer le package LangChain du nouveau provider (ex. `langchain-openai`, `langchain-community`)
+- [ ] 2. Modifier l'import et la construction de `self.embeddings` dans `__init__`
+- [ ] 3. Relancer `vectorize_events_mistral.py` (ou equivalent) pour regenerer `data/*vectors*.jsonl`
+- [ ] 4. Relancer `index_events_faiss.py` pour reconstruire `faiss_index.idx`, `faiss_metadata.pkl`, `faiss_id_mapping.pkl`
+- [ ] 5. Verifier la dimension de l'embedding produit (ex. OpenAI `text-embedding-3-small` = 1536 dims vs Mistral = 1024 dims). FAISS reconstruira automatiquement avec la bonne dimension.
+- [ ] 6. Lancer `pytest tests/unit tests/integration -q` pour valider l'ensemble du pipeline
+
+**Exemple : migrer vers OpenAI text-embedding-3-small**
+
+```python
+# Dans rag_chatbot_mistral.py
+from langchain_openai import OpenAIEmbeddings
+
+self.embeddings = OpenAIEmbeddings(
+    model="text-embedding-3-small",
+    openai_api_key=resolved_api_key,
+)
+```
+
+---
+
+### Cas 3 — Migrer vers un modele local via Ollama (sans cle API)
+
+Ollama permet de faire tourner des LLM localement (Llama 3, Mistral, Gemma, etc.) sans appel reseau.
+
+1. Installer Ollama : https://ollama.com, puis `ollama pull llama3`
+2. Installer le package : `pip install langchain-ollama`
+3. Dans `rag_chatbot_mistral.py` :
+
+```python
+from langchain_ollama import ChatOllama, OllamaEmbeddings
+
+self.embeddings = OllamaEmbeddings(model="nomic-embed-text")
+self.llm = ChatOllama(model="llama3", temperature=temperature)
+```
+
+4. Aucune cle API requise. La validation de `resolved_api_key` dans `__init__` peut etre ignoree en passant `embeddings=` et `llm=` directement au constructeur (les deux parametres sont deja prevus pour cela).
+
+---
+
+### Tableau de comparaison des providers supportes
+
+| Provider | LLM | Embeddings | Package | Cle API |
+|---|---|---|---|---|
+| Mistral (actuel) | `ChatMistralAI` | `MistralAIEmbeddings` | `langchain-mistralai` | `MISTRAL_API_KEY` |
+| OpenAI | `ChatOpenAI` | `OpenAIEmbeddings` | `langchain-openai` | `OPENAI_API_KEY` |
+| Anthropic | `ChatAnthropic` | — | `langchain-anthropic` | `ANTHROPIC_API_KEY` |
+| Ollama (local) | `ChatOllama` | `OllamaEmbeddings` | `langchain-ollama` | aucune |
+| HuggingFace | `HuggingFaceEndpoint` | `HuggingFaceEmbeddings` | `langchain-community` | `HF_TOKEN` (optionnel) |
+
+> Dans tous les cas, `ask()`, `chatbot_cli.py` et `PullEventsIDFBot.py` restent inchanges. Seules les deux lignes de construction de `self.embeddings` et `self.llm` dans `__init__` sont a adapter.
 
 
 
