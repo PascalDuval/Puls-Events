@@ -1596,30 +1596,40 @@ Si les tags inferres sont trop restrictifs (0 résultat), un fallback automatiqu
 
 ## Évaluation RAGAS (hallucinations et fiabilite)
 
-Cette section a ete refaite avec une base de reference **reelle** (pas de ground truth generee par IA) et une contrainte temporelle explicite sur les evenements sources.
+Cette section documente l'evaluation technique refaite de bout en bout avec une base de reference reelle.
 
-### Objectif et perimetre
+### Fichier de ground truth utilise
 
-- Evaluer hallucinations et fiabilite sur 5 metriques RAGAS :
-    - `faithfulness`
-    - `context_utilization`
-    - `context_precision`
-    - `context_recall`
-    - `answer_relevancy`
-- Utiliser uniquement des evenements OpenAgenda dont `firstdate_begin` est comprise entre `2025-04-25` et `2027-04-25`.
-- Executer l'evaluation en mode retrieval **sans filtres metier** (pas de filtres tags/ville/date pour le test RAGAS).
+Le fichier de reference est `tests/manual/ragas_ground_truth_temp.json`.
 
-### Demarche appliquee
+Ce fichier contient, pour chaque cas de test :
 
-1. Collecte de candidats OpenAgenda avec filtre de dates strict dans `tools/diagnostic/_fetch_gt_candidates.py`.
-2. Sauvegarde brute des retours API dans `tools/diagnostic/_gt_candidates_raw.json`.
-3. Validation manuelle des evenements conserves (exclusion des resultats hors intention metier).
-4. Redaction d'une ground truth manuelle dans `tests/manual/ragas_ground_truth_temp.json` (questions + reponses de reference + sources reelles).
-5. Adaptation du script `tools/diagnostic/ragas_eval_pull_events.py` pour :
-     - charger la ground truth JSON manuelle,
-     - aligner les questions depuis ce fichier,
-    - appeler le chatbot du projet (`rag_chatbot_mistral.py`, classe `MistralRAGChatbot`, methode `ask`) en mode `disable_auto_filters=True`,
-     - calculer les metriques RAGAS.
+- la `question`,
+- la `ground_truth` redigee manuellement,
+- la liste `selected_events` (titre, ville, dates, URL source OpenAgenda).
+
+Contrainte appliquee lors de la constitution : chaque evenement source respecte `firstdate_begin` dans la fenetre `2025-04-25` -> `2027-04-25`.
+
+### Démarche détaillée (question par question)
+
+Le protocole est identique pour les 8 questions :
+
+1. Recuperation des candidats OpenAgenda via `tools/diagnostic/_fetch_gt_candidates.py`.
+2. Validation manuelle des evenements pertinents.
+3. Redaction de la reponse de reference dans `tests/manual/ragas_ground_truth_temp.json`.
+4. Execution du chatbot du projet via `rag_chatbot_mistral.py` (`MistralRAGChatbot.ask`) avec `disable_auto_filters=True` pour mesurer la qualite brute retrieval+generation.
+5. Evaluation RAGAS sur `question`, `answer`, `contexts`, `ground_truth`.
+
+Questions evaluees :
+
+1. `as-tu un concert de jazz en Île-de-France ?`
+2. `je cherche une exposition photo en Île-de-France`
+3. `quelle sortie pour une famille avec enfants en Île-de-France ?`
+4. `propose-moi une activité autour des sciences ou de l'astronomie`
+5. `propose-moi un spectacle à Aubervilliers`
+6. `propose-moi une activité gratuite pour adolescents en Île-de-France`
+7. `y a-t-il un atelier créatif ou artistique pour adultes en Île-de-France ?`
+8. `je cherche un événement autour de la danse contemporaine`
 
 ### Commandes de reproduction
 
@@ -1630,7 +1640,7 @@ Set-Location Pull-Events
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/_fetch_gt_candidates.py
 ```
 
-Evaluation RAGAS sur la ground truth manuelle :
+Evaluation RAGAS avec ground truth manuelle :
 
 ```bash
 Set-Location Pull-Events
@@ -1644,111 +1654,38 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull
 
 | Metrique | Score moyen |
 | --- | ---: |
-| `faithfulness` | **0.8583** |
-| `context_utilization` | **0.7035** |
-| `context_precision` | **0.3264** |
-| `context_recall` | **0.1813** |
-| `answer_relevancy` | **NaN** |
+| `faithfulness` | **0.8995** |
+| `context_utilization` | **0.7039** |
+| `context_precision` | **0.3472** |
+| `context_recall` | **0.1708** |
+| `answer_relevancy` | **0.9375** |
 
-### Interpretation
+Note technique : sur `ragas==0.1.22`, `answer_relevancy` echoue parfois en interne (`TypeError`). Le script applique un fallback LLM (score JSON 0..1) pour produire une valeur exploitable.
 
-- `faithfulness` est correct : les reponses restent majoritairement ancrees dans le contexte recupere.
-- `context_utilization` est a surveiller : l'information contextuelle est partiellement exploitee.
-- `context_precision` est critique : une part importante des documents recuperes est hors cible.
-- `context_recall` est critique : le retrieval ne couvre pas assez la base de reference attendue.
-- `answer_relevancy` reste indisponible dans cette pile (`ragas==0.1.22`) a cause d'une erreur interne connue (`TypeError: unsupported operand type(s) for +=: 'dict' and 'dict'`).
+### Lecture technique des scores
 
-### Points faibles identifies (par question)
+- `faithfulness` eleve : les reponses restent globalement ancrees dans le contexte recupere.
+- `answer_relevancy` eleve : les reponses adressent bien l'intention des questions.
+- `context_utilization` moyen : une partie notable du contexte est utilisee, mais de facon inegale selon les cas.
+- `context_precision` faible : trop de documents retournes sont partiellement hors cible.
+- `context_recall` faible : des documents attendus par la ground truth ne sont pas systematiquement retrouves.
 
-- Plus faible `faithfulness` : *activite gratuite adolescents* (`0.5000`).
-- Plus faible `context_utilization` : *activite gratuite adolescents* (`0.1667`).
-- Plus faible `context_precision` : *spectacle a Aubervilliers* (`0.0000`).
-- Plus faible `context_recall` : *concert jazz* (`0.0000`).
+### Points faibles observés
 
-### Conclusion operationnelle
+- Plus faible `faithfulness` : sortie famille (`0.5294`).
+- Plus faible `context_utilization` : activite gratuite adolescents (`0.1667`).
+- Plus faible `context_precision` : concert jazz (`0.0000`) et spectacle a Aubervilliers (`0.0000`).
+- Plus faible `context_recall` : concert jazz (`0.0000`), sciences/astronomie (`0.0000`), spectacle Aubervilliers (`0.0000`), activite gratuite adolescents (`0.0000`).
 
-- La fiabilite de generation est globalement correcte.
-- Le principal levier d'amelioration se situe dans le retrieval (precision + rappel) plutot que dans la generation.
-- La comparaison future devra conserver la meme base ground truth manuelle et la meme fenetre de dates pour rester comparable.
+### Pistes d'amélioration techniques prioritaires
 
-## Améliorations RAG implémentées (phase 2)
-
-Ces améliorations ont été appliquées après la baseline RAGAS initiale :
-
-### 1) Enrichissement INTENT_TO_TAGS
-
-Le dictionnaire d'intentions métier a été élargi pour couvrir davantage de synonymes :
-
-| Ajout | Tags associés |
-|---|---|
-| `ado` / `adolescent` / `jeune` | `jeune public`, `adolescent`, `famille` |
-| `musee` | `musee`, `exposition`, `art` |
-| `cirque` | `cirque`, `spectacle` |
-| `humour` | `humour`, `spectacle` |
-| `sortie` | `sortie`, `famille`, `loisir` |
-| `balade` / `promenade` | `balade`, `nature`, `plein air` |
-| `litterature` / `lecture` | `litterature`, `lecture` |
-| `nature` / `plein air` | `nature`, `plein air`, `balade` |
-| `patrimoine` | `patrimoine` |
-| `gastronomie` | `gastronomie` |
-| `sport` | `sport` |
-| `libre` / `entree libre` | `gratuit` |
-
-### 2) Reranking léger dans search_hybrid
-
-Avant : `top_k_search = max(k*2, 20)` candidats, retour direct des premiers k après filtres.
-
-Après : `top_k_search = max(k*5, 50)` candidats, puis reranking par score combiné :
-
-- `score = similarity_score`
-- `+0.15` si ≥ 2 tags de l'intention matchent dans le document
-- `+0.08` si 1 seul tag matche
-- `+0.10` si la ville exacte est présente
-
-Les résultats sont triés par `rerank_score` décroissant avant de retourner top-k.
-
-### 3) Durcissement SYSTEM_PROMPT anti-hallucination
-
-Le prompt système a été renforcé avec 5 règles explicites :
-
-1. Utiliser **uniquement** les documents du contexte fourni.
-2. N'ajouter aucun détail non présent littéralement dans le contexte.
-3. Si information absente → écrire *"Information non disponible dans les documents."*
-4. Ne formuler aucune hypothèse hors contexte.
-5. Citer les sources (URL) systématiquement.
-
-Impact mesuré : `faithfulness` +53.8% (0.59 → 0.91).
-
-### 4) Branchement automatique du filtre temporel
-
-`temporal_deixis.infer_temporal_window()` est maintenant appelée automatiquement dans `MistralRAGChatbot.ask()` si aucun `after_date`/`before_date` n'est fourni explicitement. La fenêtre UTC déduite est passée à `search_hybrid`.
-
-Expressions reconnues :
-
-| Catégorie | Exemples |
-|---|---|
-| Déictiques relatifs | *"ce week-end"*, *"demain soir"*, *"aujourd'hui"*, *"cette semaine"*, *"semaine prochaine"*, *"après-demain"*, *"ce soir"* |
-| Mois explicites (avec ou sans année) | *"en mai"*, *"en mai 2026"*, *"de mai 2026"*, *"pour juin"*, *"au mois de mars 2027"* |
-| Saisons (avec ou sans année) | *"en été"*, *"cet été"*, *"en été 2026"*, *"au printemps"*, *"en automne"*, *"en hiver 2026"* |
-
-Pour les mois explicites, la fenêtre est calculée sur le mois entier (du 1er au dernier jour). Si l'année est absente, l'année courante est utilisée ; si le mois est déjà passé, l'année suivante est automatiquement inférée.
-
-Le filtrage date est applique via recouvrement d'intervalle (`event_start` / `event_end`) pour ne pas exclure les événements encore en cours.
-
-Un fallback automatique sans filtre de tags est en place (`ask()` retry avec `tags=None`) mais pas sans filtre temporel — si le corpus ne contient aucun événement dans la fenêtre détectée, 0 résultats seront retournés.
-
-### 5) Mise à jour chatbot_cli.py
-
-- `--verbose` : affiche la fenêtre temporelle auto-détectée, le nombre de docs récupérés et leur `rerank_score`.
-- Sortie `--json` enrichie avec `title`, `city`, `rerank_score`, `tags`, `url` par document.
-- `--tags` documenté comme override de l'auto-inférence.
-- Encodage console Windows : affichage ASCII (`->`) dans les logs verbose pour eviter les erreurs `cp1252`.
-
-### 6) Affichage Streamlit en format français
-
-- Dans `PullEventsIDFBot.py`, les dates affichées dans les résultats sont normalisées au format français `JJ/MM/AAAA`.
-- Les périodes d'événements sont présentées en clair (`du JJ/MM/AAAA au JJ/MM/AAAA`) et passent en `JJ/MM/AAAA HH:MM` quand les heures sont disponibles.
-- Les dates présentes dans le texte de réponse affiché sont également converties en format français.
+1. Retrieval lexical hybride : combiner FAISS avec un score BM25/keyword sur `title`, `tags` et `city` pour remonter le rappel.
+2. Re-ranking cross-encoder : reclasser le top-N FAISS par pertinence semantique question-document.
+3. Expansion de requete : enrichir automatiquement la question avec synonymes controles (ex. jazz -> manouche/swing).
+4. Retrieval multi-passes : premier passage large (`k` eleve), second passage filtre par contraintes explicites (ville, gratuit, public).
+5. Normalisation metadata : harmoniser `city`, accents, casse, variantes (Aubervilliers/Aubervillier) avant indexation.
+6. Jeu d'evaluation versionne : figer un fichier ground truth final (non temp) et suivre l'evolution des scores par commit.
+7. Tests automatiques de non-regression RAGAS : seuils minimaux sur precision/rappel pour bloquer les regressions retrieval.
 
 ---
 
