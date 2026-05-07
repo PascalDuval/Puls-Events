@@ -11,7 +11,7 @@ Ce script:
 
 Usage:
   C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull_events.py \
-      --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env" \
+    --env-file "C:/Users/karap/OpenClassRooms/projet11/Pull-Events/.env" \
       --k 6
 """
 

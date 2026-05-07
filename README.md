@@ -85,7 +85,7 @@ Sortie attendue :
 Si un fichier `.env` contenant `MISTRAL_API_KEY` est disponible :
 
 ```bash
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe vectorize_events_mistral.py --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env"
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe vectorize_events_mistral.py --env-file "C:/Users/karap/OpenClassRooms/projet11/Pull-Events/.env"
 ```
 
 Sinon, la clé peut être fournie par variable d'environnement ou argument CLI.
@@ -1635,7 +1635,7 @@ Evaluation RAGAS sur la ground truth manuelle :
 ```bash
 Set-Location Pull-Events
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull_events.py \
-    --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env" \
+    --env-file "C:/Users/karap/OpenClassRooms/projet11/Pull-Events/.env" \
     --k 6 \
     --ground-truth-file tests/manual/ragas_ground_truth_temp.json
 ```
@@ -1807,7 +1807,7 @@ Les points a retenir sont les suivants :
 conda activate LLMRag
 pip install -r requirements.txt
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe openagenda_culture_france_rag.py
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe vectorize_events_mistral.py --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env"
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe vectorize_events_mistral.py --env-file "C:/Users/karap/OpenClassRooms/projet11/Pull-Events/.env"
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe index_events_faiss.py
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/unit -q
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_rag_quality_guard.py -q
