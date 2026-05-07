@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import inspect
 import re
+import time
 from typing import Any, Dict, List, Optional
 import unicodedata
 
@@ -20,6 +21,8 @@ DEFAULT_TEMPERATURE = 0.2
 DEFAULT_TOP_P = 0.9
 DEFAULT_MAX_TOKENS = 600
 DEFAULT_TOP_K = 20
+DEFAULT_API_RETRY_ATTEMPTS = 4
+DEFAULT_API_RETRY_BASE_DELAY_S = 0.8
 
 
 def _supports_intent_tags(searcher: Any) -> bool:
@@ -312,25 +315,137 @@ class MistralRAGChatbot:
     # ------------------------------------------------------------------
 
     def _embed(self, text: str) -> List[float]:
-        try:
-            return self.embeddings.embed_query(text)
-        except Exception as exc:
-            status_code = getattr(exc, "status_code", None)
-            is_auth_error = status_code == 401 or "unauthorized" in str(exc).lower()
-            if is_auth_error:
-                raise RuntimeError(
-                    "Authentification Mistral invalide (401 Unauthorized). "
-                    "Verifiez MISTRAL_API_KEY dans l'environnement ou Pull-Events/.env."
-                ) from exc
-            raise
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, DEFAULT_API_RETRY_ATTEMPTS + 1):
+            try:
+                return self.embeddings.embed_query(text)
+            except Exception as exc:
+                last_exc = exc
+                status_code = self._extract_status_code(exc)
+                lower_error = str(exc).lower()
+                is_auth_error = status_code == 401 or "unauthorized" in lower_error
+                if is_auth_error:
+                    raise RuntimeError(
+                        "Authentification Mistral invalide (401 Unauthorized). "
+                        "Verifiez MISTRAL_API_KEY dans l'environnement ou Pull-Events/.env."
+                    ) from exc
+
+                is_last_attempt = attempt == DEFAULT_API_RETRY_ATTEMPTS
+                if is_last_attempt or not self._is_transient_mistral_error(exc):
+                    break
+
+                delay = DEFAULT_API_RETRY_BASE_DELAY_S * (2 ** (attempt - 1))
+                time.sleep(delay)
+
+        if self._is_rate_limited_error(last_exc):
+            raise RuntimeError(
+                "Mistral est temporairement surcharge (429 Too Many Requests). "
+                "Merci de reessayer dans quelques secondes."
+            ) from last_exc
+
+        if self._is_transient_mistral_error(last_exc):
+            raise RuntimeError(
+                "Erreur reseau temporaire vers Mistral. Merci de reessayer."
+            ) from last_exc
+
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("Erreur inattendue lors de la generation d'embedding.")
 
     def _generate(self, question: str, context: str) -> str:
         messages = [
             SystemMessage(content=SYSTEM_PROMPT),
             HumanMessage(content=f"Question: {question}\n\nContexte:\n{context}"),
         ]
-        response = self.llm.invoke(messages)
-        return response.content.strip()
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, DEFAULT_API_RETRY_ATTEMPTS + 1):
+            try:
+                response = self.llm.invoke(messages)
+                return response.content.strip()
+            except Exception as exc:
+                last_exc = exc
+                status_code = self._extract_status_code(exc)
+                lower_error = str(exc).lower()
+                is_auth_error = status_code == 401 or "unauthorized" in lower_error
+                if is_auth_error:
+                    raise RuntimeError(
+                        "Authentification Mistral invalide (401 Unauthorized). "
+                        "Verifiez MISTRAL_API_KEY dans l'environnement ou Pull-Events/.env."
+                    ) from exc
+
+                is_last_attempt = attempt == DEFAULT_API_RETRY_ATTEMPTS
+                if is_last_attempt or not self._is_transient_mistral_error(exc):
+                    break
+
+                delay = DEFAULT_API_RETRY_BASE_DELAY_S * (2 ** (attempt - 1))
+                time.sleep(delay)
+
+        if self._is_rate_limited_error(last_exc):
+            raise RuntimeError(
+                "Mistral est temporairement surcharge (429 Too Many Requests). "
+                "Merci de reessayer dans quelques secondes."
+            ) from last_exc
+
+        if self._is_transient_mistral_error(last_exc):
+            raise RuntimeError(
+                "Erreur reseau temporaire vers Mistral. Merci de reessayer."
+            ) from last_exc
+
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("Erreur inattendue lors de la generation de reponse.")
+
+    @staticmethod
+    def _extract_status_code(exc: Exception) -> Optional[int]:
+        status_code = getattr(exc, "status_code", None)
+        if isinstance(status_code, int):
+            return status_code
+
+        response = getattr(exc, "response", None)
+        response_status = getattr(response, "status_code", None)
+        if isinstance(response_status, int):
+            return response_status
+        return None
+
+    @staticmethod
+    def _is_rate_limited_error(exc: Optional[Exception]) -> bool:
+        if exc is None:
+            return False
+        status_code = MistralRAGChatbot._extract_status_code(exc)
+        if status_code == 429:
+            return True
+        lower_error = str(exc).lower()
+        return "429" in lower_error or "too many requests" in lower_error or "rate limit" in lower_error
+
+    @staticmethod
+    def _is_transient_mistral_error(exc: Optional[Exception]) -> bool:
+        if exc is None:
+            return False
+
+        status_code = MistralRAGChatbot._extract_status_code(exc)
+        if status_code in {408, 409, 425, 429, 500, 502, 503, 504}:
+            return True
+
+        # Sur certaines versions de langchain_mistralai, une reponse 429 peut remonter
+        # en KeyError('data') lors du parsing JSON de la reponse embeddings.
+        if isinstance(exc, KeyError) and str(exc).strip() == "'data'":
+            return True
+
+        lower_error = str(exc).lower()
+        transient_markers = [
+            "too many requests",
+            "rate limit",
+            "timeout",
+            "timed out",
+            "temporarily unavailable",
+            "service unavailable",
+            "connecterror",
+            "connection reset",
+            "connection aborted",
+            "connection refused",
+            "getaddrinfo failed",
+        ]
+        return any(marker in lower_error for marker in transient_markers)
 
     @staticmethod
     def _format_context(docs: List[Dict[str, Any]]) -> str:
