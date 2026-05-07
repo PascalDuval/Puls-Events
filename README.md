@@ -1618,7 +1618,7 @@ Cette section a ete refaite avec une base de reference **reelle** (pas de ground
 5. Adaptation du script `tools/diagnostic/ragas_eval_pull_events.py` pour :
      - charger la ground truth JSON manuelle,
      - aligner les questions depuis ce fichier,
-     - executer le retrieval sans filtres,
+    - appeler le chatbot du projet (`rag_chatbot_mistral.py`, classe `MistralRAGChatbot`, methode `ask`) en mode `disable_auto_filters=True`,
      - calculer les metriques RAGAS.
 
 ### Commandes de reproduction
@@ -1644,10 +1644,10 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull
 
 | Metrique | Score moyen |
 | --- | ---: |
-| `faithfulness` | **0.8151** |
-| `context_utilization` | **0.7249** |
-| `context_precision` | **0.3931** |
-| `context_recall` | **0.2188** |
+| `faithfulness` | **0.8583** |
+| `context_utilization` | **0.7035** |
+| `context_precision` | **0.3264** |
+| `context_recall` | **0.1813** |
 | `answer_relevancy` | **NaN** |
 
 ### Interpretation
@@ -1660,10 +1660,10 @@ C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull
 
 ### Points faibles identifies (par question)
 
-- Plus faible `faithfulness` : *sortie famille* (`0.3636`).
+- Plus faible `faithfulness` : *activite gratuite adolescents* (`0.5000`).
 - Plus faible `context_utilization` : *activite gratuite adolescents* (`0.1667`).
 - Plus faible `context_precision` : *spectacle a Aubervilliers* (`0.0000`).
-- Plus faible `context_recall` : *sciences/astronomie* (`0.0000`).
+- Plus faible `context_recall` : *concert jazz* (`0.0000`).
 
 ### Conclusion operationnelle
 

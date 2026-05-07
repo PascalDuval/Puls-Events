@@ -203,6 +203,7 @@ class MistralRAGChatbot:
         tags: Optional[List[str]] = None,
         after_date: Optional[str] = None,
         before_date: Optional[str] = None,
+        disable_auto_filters: bool = False,
     ) -> RAGAnswer:
         """Cycle RAG complet : embed -> retrieve -> generate."""
         question = (question or "").strip()
@@ -233,16 +234,22 @@ class MistralRAGChatbot:
                 model=self.model,
             )
 
-        provided_tags = [self._normalize_tag(t) for t in (tags or []) if self._normalize_tag(t)]
-        inferred_tags = self._infer_tags_from_question(question) if not provided_tags else []
-        effective_tags = provided_tags or inferred_tags or None
+        if disable_auto_filters:
+            # Mode d'evaluation: aucune inference de tags, aucune deixis temporelle.
+            provided_tags = []
+            inferred_tags = []
+            effective_tags = None
+        else:
+            provided_tags = [self._normalize_tag(t) for t in (tags or []) if self._normalize_tag(t)]
+            inferred_tags = self._infer_tags_from_question(question) if not provided_tags else []
+            effective_tags = provided_tags or inferred_tags or None
 
-        # Filtre temporel automatique depuis la deixis si non fourni explicitement
-        if not after_date and not before_date:
-            tw = infer_temporal_window(question)
-            if tw:
-                after_date = tw.after_date_utc
-                before_date = tw.before_date_utc
+            # Filtre temporel automatique depuis la deixis si non fourni explicitement
+            if not after_date and not before_date:
+                tw = infer_temporal_window(question)
+                if tw:
+                    after_date = tw.after_date_utc
+                    before_date = tw.before_date_utc
 
         embedding = self._embed(question)
 

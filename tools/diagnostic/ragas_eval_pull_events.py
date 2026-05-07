@@ -2,11 +2,12 @@
 Evaluation RAGAS pour Pull-Events (sans modifier les scripts existants).
 
 Ce script:
-1) Lance le RAG sur un jeu de questions representatif.
-2) Capture les reponses et les contextes effectivement recuperes.
-3) Genere une ground truth "silver" (alternative au labeling manuel).
-4) Calcule les metriques RAGAS.
-5) Affiche un diagnostic exploitable en console.
+1) Charge les questions et la ground truth manuelle depuis un JSON.
+2) Lance le chatbot du projet (`rag_chatbot_mistral.py`, `MistralRAGChatbot.ask`).
+3) Active le mode sans filtres automatiques pour l'evaluation (`disable_auto_filters=True`).
+4) Capture les reponses et les contextes effectivement recuperes.
+5) Calcule les metriques RAGAS.
+6) Affiche un diagnostic exploitable en console.
 
 Usage:
   C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull_events.py \
@@ -120,22 +121,19 @@ def run_rag_collection(chatbot: MistralRAGChatbot, questions: List[str], k: int)
 
     for i, question in enumerate(questions, 1):
         print(f"[{i}/{len(questions)}] RAG -> {question}")
-        # Evaluation sans filtres metier: pas de city/region/tags/date, pas d'inference.
-        embedding = chatbot._embed(question)
-        search_kwargs = {
-            "k": k,
-            "city": None,
-            "region": None,
-            "tags": None,
-            "after_date": None,
-            "before_date": None,
-        }
-        docs = chatbot.searcher.search_hybrid(embedding, **search_kwargs)
-        context = chatbot._format_context(docs) if docs else ""
-        answer = chatbot._generate(question, context) if docs else "Je ne trouve pas d'information exploitable dans les documents recuperes pour repondre a cette question."
-        answers.append(answer)
-        retrieved_docs.append(docs)
-        contexts.append([doc_to_context(d) for d in docs])
+        rag_answer = chatbot.ask(
+            question=question,
+            k=k,
+            city=None,
+            region=None,
+            tags=None,
+            after_date=None,
+            before_date=None,
+            disable_auto_filters=True,
+        )
+        answers.append(rag_answer.answer)
+        retrieved_docs.append(rag_answer.documents)
+        contexts.append([doc_to_context(d) for d in rag_answer.documents])
 
     return answers, contexts, retrieved_docs
 
