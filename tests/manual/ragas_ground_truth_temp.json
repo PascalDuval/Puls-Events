@@ -1,0 +1,289 @@
+[
+  {
+    "id": "Q1",
+    "question": "as-tu un concert de jazz en Île-de-France ?",
+    "selected_events": [
+      {
+        "title": "Zoot Sundays! Sessions Jazz du dimanche",
+        "city": "Paris",
+        "event_start": "2025-12-07",
+        "event_end": "2025-12-07",
+        "source_url": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche"
+      },
+      {
+        "title": "Zoot Sundays! Sessions Jazz du dimanche",
+        "city": "Paris",
+        "event_start": "2025-12-28",
+        "event_end": "2025-12-28",
+        "source_url": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-6998413"
+      },
+      {
+        "title": "Zoot Sundays! Sessions Jazz du dimanche",
+        "city": "Paris",
+        "event_start": "2026-01-25",
+        "event_end": "2026-01-25",
+        "source_url": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-2634862"
+      }
+    ],
+    "ground_truth": "Oui. Des concerts de jazz sont disponibles à Paris avec la série \"Zoot Sundays! Sessions Jazz du dimanche\" (07/12/2025, 28/12/2025, 25/01/2026). Sources: https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche, https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-6998413, https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-2634862."
+  },
+  {
+    "id": "Q2",
+    "question": "je cherche une exposition photo en Île-de-France",
+    "selected_events": [
+      {
+        "title": "Exposition photo",
+        "city": "Saint-Germain-en-Laye",
+        "event_start": "2025-09-20",
+        "event_end": "2025-09-20",
+        "source_url": "https://openagenda.com/culture/events/exposition-photo-6320279"
+      },
+      {
+        "title": "Expo Photo d'Arcy à Bois d'Arcy / Thème libre",
+        "city": "Bois-d'Arcy",
+        "event_start": "2026-04-11",
+        "event_end": "2026-04-12",
+        "source_url": "https://openagenda.com/bois-darcy/events/expo-photo-darcy-a-bois-darcy-theme-libre"
+      },
+      {
+        "title": "Expo Photo \"c'est la fête !\"",
+        "city": "Saint-Hilarion",
+        "event_start": "2026-03-21",
+        "event_end": "2026-03-23",
+        "source_url": "https://openagenda.com/totaleimpro20/events/expo-photo-cest-la-fete"
+      },
+      {
+        "title": "SALON DE LA PHOTO",
+        "city": "Paris",
+        "event_start": "2025-10-09",
+        "event_end": "2025-10-12",
+        "source_url": "https://openagenda.com/totaleimpro20/events/salon-de-la-photo"
+      }
+    ],
+    "ground_truth": "Voici des expositions photo en Île-de-France: \"Exposition photo\" (Saint-Germain-en-Laye, 20/09/2025), \"Expo Photo d'Arcy\" (Bois-d'Arcy, 11-12/04/2026), \"Expo Photo c'est la fête !\" (Saint-Hilarion, 21-23/03/2026) et \"SALON DE LA PHOTO\" (Paris, 09-12/10/2025). Sources: https://openagenda.com/culture/events/exposition-photo-6320279, https://openagenda.com/bois-darcy/events/expo-photo-darcy-a-bois-darcy-theme-libre, https://openagenda.com/totaleimpro20/events/expo-photo-cest-la-fete, https://openagenda.com/totaleimpro20/events/salon-de-la-photo."
+  },
+  {
+    "id": "Q3",
+    "question": "quelle sortie pour une famille avec enfants en Île-de-France ?",
+    "selected_events": [
+      {
+        "title": "Dimanche au Vert en famille avec enfants de 3 à 10 ans  - Parc de l'Ile St Germain à Issy-les-Moulineaux",
+        "city": "Issy-les-Moulineaux",
+        "event_start": "2025-09-14",
+        "event_end": "2026-05-17",
+        "source_url": "https://openagenda.com/econature/events/decouverte-nature-en-famille-avec-enfants-de-2-a-10-ans-parc-de-lile-st-germain-a-issy-les-moulineaux"
+      },
+      {
+        "title": "Atelier danse parent-enfant",
+        "city": "Villeneuve-Saint-Georges",
+        "event_start": "2025-10-04",
+        "event_end": "2025-10-04",
+        "source_url": "https://openagenda.com/biblis-en-folie-2025/events/atelier-danse-parent-enfant-9025923"
+      },
+      {
+        "title": "Monument jeu d'enfant",
+        "city": "Champs-sur-Marne",
+        "event_start": "2025-10-18",
+        "event_end": "2025-10-19",
+        "source_url": "https://openagenda.com/chateau-champs-sur-marne/events/monument-jeu-denfant-5601574"
+      },
+      {
+        "title": "Vélo en famille",
+        "city": "Verneuil-sur-Seine",
+        "event_start": "2025-05-17",
+        "event_end": "2025-05-17",
+        "source_url": "https://openagenda.com/maiavelo/events/velo-en-famille-297369"
+      }
+    ],
+    "ground_truth": "Pour une sortie famille en Île-de-France, des options réelles incluent \"Dimanche au Vert en famille\" (Issy-les-Moulineaux), \"Atelier danse parent-enfant\" (Villeneuve-Saint-Georges, 04/10/2025), \"Monument jeu d'enfant\" (Champs-sur-Marne, 18-19/10/2025) et \"Vélo en famille\" (Verneuil-sur-Seine, 17/05/2025). Sources: https://openagenda.com/econature/events/decouverte-nature-en-famille-avec-enfants-de-2-a-10-ans-parc-de-lile-st-germain-a-issy-les-moulineaux, https://openagenda.com/biblis-en-folie-2025/events/atelier-danse-parent-enfant-9025923, https://openagenda.com/chateau-champs-sur-marne/events/monument-jeu-denfant-5601574, https://openagenda.com/maiavelo/events/velo-en-famille-297369."
+  },
+  {
+    "id": "Q4",
+    "question": "propose-moi une activité autour des sciences ou de l'astronomie",
+    "selected_events": [
+      {
+        "title": "Le planétarium",
+        "city": "Paris",
+        "event_start": "2025-08-26",
+        "event_end": "2026-09-27",
+        "source_url": "https://openagenda.com/aplf-planetariums/events/le-planetarium-45240"
+      },
+      {
+        "title": "Planétarium",
+        "city": "Deuil-la-Barre",
+        "event_start": "2026-05-23",
+        "event_end": "2026-05-23",
+        "source_url": "https://openagenda.com/culture/events/planetarium-2483703"
+      },
+      {
+        "title": "Les pionnières de l'astronomie",
+        "city": "Paris",
+        "event_start": "2026-02-11",
+        "event_end": "2026-02-11",
+        "source_url": "https://openagenda.com/echosciences/events/les-pionnieres-de-lastronomie"
+      },
+      {
+        "title": "Exposition d'astronomie",
+        "city": "Vaujours",
+        "event_start": "2025-09-20",
+        "event_end": "2025-09-21",
+        "source_url": "https://openagenda.com/culture/events/astronomie-6275824"
+      }
+    ],
+    "ground_truth": "Pour une activité sciences/astronomie, il existe \"Le planétarium\" (Paris), \"Planétarium\" (Deuil-la-Barre, 23/05/2026), \"Les pionnières de l'astronomie\" (Paris, 11/02/2026) et \"Exposition d'astronomie\" (Vaujours, 20-21/09/2025). Sources: https://openagenda.com/aplf-planetariums/events/le-planetarium-45240, https://openagenda.com/culture/events/planetarium-2483703, https://openagenda.com/echosciences/events/les-pionnieres-de-lastronomie, https://openagenda.com/culture/events/astronomie-6275824."
+  },
+  {
+    "id": "Q5",
+    "question": "propose-moi un spectacle à Aubervilliers",
+    "selected_events": [
+      {
+        "title": "Inauguration Place des Beaux-Sons, 1ere mondiale",
+        "city": "Aubervilliers",
+        "event_start": "2026-06-21",
+        "event_end": "2026-06-21",
+        "source_url": "https://openagenda.com/culture/events/inauguration-place-des-beaux-sons-1ere-mondiale"
+      },
+      {
+        "title": "POLYCHROMA: Lumières déviantes",
+        "city": "Aubervilliers",
+        "event_start": "2026-05-30",
+        "event_end": "2026-05-30",
+        "source_url": "https://openagenda.com/le-point-fort-aubervilliers/events/polychroma-lumieres-deviantes"
+      },
+      {
+        "title": "Découvrez le patrimoine funéraire du cimetière d'Aubervilliers avec Mementour",
+        "city": "Aubervilliers",
+        "event_start": "2025-09-20",
+        "event_end": "2025-09-20",
+        "source_url": "https://openagenda.com/culture/events/decouvrez-le-patrimoine-funeraire-du-cimetiere-daubervilliers-avec-mementour"
+      },
+      {
+        "title": "Pinoy Festival",
+        "city": "Aubervilliers",
+        "event_start": "2026-06-28",
+        "event_end": "2026-06-28",
+        "source_url": "https://openagenda.com/le-point-fort-aubervilliers/events/pinoy-festival"
+      }
+    ],
+    "ground_truth": "À Aubervilliers, des événements culturels pertinents incluent \"Inauguration Place des Beaux-Sons\" (21/06/2026), \"POLYCHROMA: Lumières déviantes\" (30/05/2026), \"Découverte du patrimoine funéraire avec Mementour\" (20/09/2025) et \"Pinoy Festival\" (28/06/2026). Sources: https://openagenda.com/culture/events/inauguration-place-des-beaux-sons-1ere-mondiale, https://openagenda.com/le-point-fort-aubervilliers/events/polychroma-lumieres-deviantes, https://openagenda.com/culture/events/decouvrez-le-patrimoine-funeraire-du-cimetiere-daubervilliers-avec-mementour, https://openagenda.com/le-point-fort-aubervilliers/events/pinoy-festival."
+  },
+  {
+    "id": "Q6",
+    "question": "propose-moi une activité gratuite pour adolescents en Île-de-France",
+    "selected_events": [
+      {
+        "title": "Atelier théâtre \"Et si on rejouait le film ?\"",
+        "city": "Paris",
+        "event_start": "2026-03-05",
+        "event_end": "2026-03-05",
+        "source_url": "https://openagenda.com/scare/events/atelier-theatre-et-si-on-rejouait-le-film"
+      },
+      {
+        "title": "Ciné-Gourmand",
+        "city": "Paris",
+        "event_start": "2025-11-26",
+        "event_end": "2025-11-26",
+        "source_url": "https://openagenda.com/scare/events/cine-gourmand-9473739"
+      },
+      {
+        "title": "Le Garçon et le Héron pour les fêtes de fin d'année !",
+        "city": "Paris",
+        "event_start": "2025-12-30",
+        "event_end": "2025-12-30",
+        "source_url": "https://openagenda.com/scare/events/le-garcon-et-le-heron-pour-les-fetes-de-fin-dannee"
+      },
+      {
+        "title": "Le Grand Noël des Animaux pour les fêtes de fin d'année !",
+        "city": "Paris",
+        "event_start": "2025-12-26",
+        "event_end": "2025-12-26",
+        "source_url": "https://openagenda.com/scare/events/le-grand-noel-des-animaux-pour-les-fetes-de-fin-dannee"
+      },
+      {
+        "title": "Le Manuel d'une jeune mariée",
+        "city": "Lagny-sur-Marne",
+        "event_start": "2025-09-21",
+        "event_end": "2025-09-21",
+        "source_url": "https://openagenda.com/culture/events/le-manuel-dune-jeune-mariee"
+      }
+    ],
+    "ground_truth": "Pour des adolescents en Île-de-France, des activités pertinentes incluent l'\"Atelier théâtre Et si on rejouait le film ?\" (Paris, 05/03/2026), \"Ciné-Gourmand\" (Paris, 26/11/2025), \"Le Garçon et le Héron\" (Paris, 30/12/2025), \"Le Grand Noël des Animaux\" (Paris, 26/12/2025) et \"Le Manuel d'une jeune mariée\" (Lagny-sur-Marne, 21/09/2025). Sources: https://openagenda.com/scare/events/atelier-theatre-et-si-on-rejouait-le-film, https://openagenda.com/scare/events/cine-gourmand-9473739, https://openagenda.com/scare/events/le-garcon-et-le-heron-pour-les-fetes-de-fin-dannee, https://openagenda.com/scare/events/le-grand-noel-des-animaux-pour-les-fetes-de-fin-dannee, https://openagenda.com/culture/events/le-manuel-dune-jeune-mariee."
+  },
+  {
+    "id": "Q7",
+    "question": "y a-t-il un atelier créatif ou artistique pour adultes en Île-de-France ?",
+    "selected_events": [
+      {
+        "title": "Atelier PREMIERES NEIGES",
+        "city": "Antony",
+        "event_start": "2025-12-03",
+        "event_end": "2025-12-03",
+        "source_url": "https://openagenda.com/scare/events/atelier-premieres-neiges"
+      },
+      {
+        "title": "Atelier LE CHANT DES FÔRETS",
+        "city": "Antony",
+        "event_start": "2025-12-17",
+        "event_end": "2025-12-17",
+        "source_url": "https://openagenda.com/scare/events/atelier-le-chant-des-forets"
+      },
+      {
+        "title": "Atelier LES TOUTES PETITES CREATURES 2",
+        "city": "Antony",
+        "event_start": "2026-02-11",
+        "event_end": "2026-02-11",
+        "source_url": "https://openagenda.com/scare/events/atelier-les-toutes-petites-creatures-2"
+      }
+    ],
+    "ground_truth": "Oui, des ateliers artistiques existent en Île-de-France: \"Atelier PREMIERES NEIGES\" (Antony, 03/12/2025), \"Atelier LE CHANT DES FÔRETS\" (Antony, 17/12/2025) et \"Atelier LES TOUTES PETITES CREATURES 2\" (Antony, 11/02/2026). Sources: https://openagenda.com/scare/events/atelier-premieres-neiges, https://openagenda.com/scare/events/atelier-le-chant-des-forets, https://openagenda.com/scare/events/atelier-les-toutes-petites-creatures-2."
+  },
+  {
+    "id": "Q8",
+    "question": "je cherche un événement autour de la danse contemporaine",
+    "selected_events": [
+      {
+        "title": "Solos - Danse contemporaine - Journée Internationale de la Danse",
+        "city": "Paris",
+        "event_start": "2026-04-26",
+        "event_end": "2026-04-26",
+        "source_url": "https://openagenda.com/theatre-mandapa/events/solos-danse-contemporaine-journee-internationale-de-la-danse"
+      },
+      {
+        "title": "Spectacle de danse contemporaine - Troc !",
+        "city": "Jouy-en-Josas",
+        "event_start": "2026-05-23",
+        "event_end": "2026-05-23",
+        "source_url": "https://openagenda.com/culture/events/spectacle-de-danse-contemporaine-troc"
+      },
+      {
+        "title": "Danse contemporaine parmi les sculptures",
+        "city": "Égreville",
+        "event_start": "2025-05-17",
+        "event_end": "2025-05-17",
+        "source_url": "https://openagenda.com/ndm-2025-ile-de-france/events/danse-contemporaine-parmi-les-sculptures"
+      },
+      {
+        "title": "PLATEAUX DANSE",
+        "city": "Bagnolet",
+        "event_start": "2025-06-06",
+        "event_end": "2025-06-06",
+        "source_url": "https://openagenda.com/ville-de-bagnolet/events/plateaux-danse"
+      },
+      {
+        "title": "Master-classe avec Orlando Bass",
+        "city": "Versailles",
+        "event_start": "2025-05-03",
+        "event_end": "2025-05-03",
+        "source_url": "https://openagenda.com/boxsons/events/master-classe-avec-orlando-bass"
+      },
+      {
+        "title": "Danse pour tous",
+        "city": "Meudon",
+        "event_start": "2025-07-12",
+        "event_end": "2025-07-13",
+        "source_url": "https://openagenda.com/jardins-ouverts-2025/events/danse-pour-tous"
+      }
+    ],
+    "ground_truth": "Autour de la danse contemporaine, il existe \"Solos - Danse contemporaine\" (Paris, 26/04/2026), \"Spectacle de danse contemporaine - Troc !\" (Jouy-en-Josas, 23/05/2026), \"Danse contemporaine parmi les sculptures\" (Égreville, 17/05/2025), \"PLATEAUX DANSE\" (Bagnolet, 06/06/2025), la \"Master-classe avec Orlando Bass\" (Versailles, 03/05/2025) et \"Danse pour tous\" (Meudon, 12-13/07/2025). Sources: https://openagenda.com/theatre-mandapa/events/solos-danse-contemporaine-journee-internationale-de-la-danse, https://openagenda.com/culture/events/spectacle-de-danse-contemporaine-troc, https://openagenda.com/ndm-2025-ile-de-france/events/danse-contemporaine-parmi-les-sculptures, https://openagenda.com/ville-de-bagnolet/events/plateaux-danse, https://openagenda.com/boxsons/events/master-classe-avec-orlando-bass, https://openagenda.com/jardins-ouverts-2025/events/danse-pour-tous."
+  }
+]

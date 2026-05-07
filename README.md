@@ -1596,88 +1596,80 @@ Si les tags inferres sont trop restrictifs (0 résultat), un fallback automatiqu
 
 ## Évaluation RAGAS (hallucinations et fiabilite)
 
-Cette section mesure objectivement la qualité génération/retrieval **après** ajout du filtrage intentions/tags et des fallbacks.
+Cette section a ete refaite avec une base de reference **reelle** (pas de ground truth generee par IA) et une contrainte temporelle explicite sur les evenements sources.
 
-### Métriques utilisees
+### Objectif et perimetre
 
-- `faithfulness`
-- `context_utilization`
-- `context_precision`
-- `context_recall`
-- ~~`answer_relevancy`~~ *(desactivee — a implementer ulterieurement)*
+- Evaluer hallucinations et fiabilite sur 5 metriques RAGAS :
+    - `faithfulness`
+    - `context_utilization`
+    - `context_precision`
+    - `context_recall`
+    - `answer_relevancy`
+- Utiliser uniquement des evenements OpenAgenda dont `firstdate_begin` est comprise entre `2025-04-25` et `2027-04-25`.
+- Executer l'evaluation en mode retrieval **sans filtres metier** (pas de filtres tags/ville/date pour le test RAGAS).
 
-### Protocole applique
+### Demarche appliquee
 
-1. Jeu de 7 questions métier (question meteo retiree, question quantitative retiree car traitee par fallback).
-2. Passage de chaque question dans le pipeline réel (`MistralRAGChatbot.ask`).
-3. Capture de `answer` et `contexts` reellement récupérés.
-4. Construction d'une `ground_truth` silver (référence automatique basee uniquement sur les contextes).
-5. Évaluation RAGAS sur `question/answer/contexts/ground_truth`.
+1. Collecte de candidats OpenAgenda avec filtre de dates strict dans `tools/diagnostic/_fetch_gt_candidates.py`.
+2. Sauvegarde brute des retours API dans `tools/diagnostic/_gt_candidates_raw.json`.
+3. Validation manuelle des evenements conserves (exclusion des resultats hors intention metier).
+4. Redaction d'une ground truth manuelle dans `tests/manual/ragas_ground_truth_temp.json` (questions + reponses de reference + sources reelles).
+5. Adaptation du script `tools/diagnostic/ragas_eval_pull_events.py` pour :
+     - charger la ground truth JSON manuelle,
+     - aligner les questions depuis ce fichier,
+     - executer le retrieval sans filtres,
+     - calculer les metriques RAGAS.
 
-Script: `tools/diagnostic/ragas_eval_pull_events.py`
+### Commandes de reproduction
 
-Commande de reproduction (depuis `Pull-Events/`) :
+Collecte des candidats (fenetre stricte API) :
 
 ```bash
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull_events.py --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env" --k 6
+Set-Location Pull-Events
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/_fetch_gt_candidates.py
 ```
 
-### Baseline (avant améliorations — 1 run)
-
-| Métrique | Score |
-| --- | ---: |
-| `faithfulness` | 0.5932 |
-| `context_utilization` | 0.9062 |
-| `context_precision` | 0.6238 |
-| `context_recall` | 0.8524 |
-
-### Résultats post-améliorations (3 runs — moyenne ± écart-type, rerun du 28/04/2026)
-
-Commande de reproduction :
+Evaluation RAGAS sur la ground truth manuelle :
 
 ```bash
 Set-Location Pull-Events
 C:/Users/karap/anaconda3/envs/LLMRag/python.exe tools/diagnostic/ragas_eval_pull_events.py \
-  --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env" \
-  --k 6 --runs 3
+    --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env" \
+    --k 6 \
+    --ground-truth-file tests/manual/ragas_ground_truth_temp.json
 ```
 
-| Métrique | Moy. | ±std | Min | Max |
-| --- | ---: | ---: | ---: | ---: |
-| `faithfulness` | 0.9122 | 0.0621 | 0.8571 | 0.9796 |
-| `context_utilization` | 0.7165 | 0.0187 | 0.6950 | 0.7284 |
-| `context_precision` | 0.7130 | 0.0484 | 0.6776 | 0.7681 |
-| `context_recall` | 0.7698 | 0.0576 | 0.7211 | 0.8333 |
-| ~~`answer_relevancy`~~ | *(a implementer)* | | | |
+### Resultats obtenus (run complet valide)
 
-### Tableau des gains (baseline → post-améliorations)
+| Metrique | Score moyen |
+| --- | ---: |
+| `faithfulness` | **0.8151** |
+| `context_utilization` | **0.7249** |
+| `context_precision` | **0.3931** |
+| `context_recall` | **0.2188** |
+| `answer_relevancy` | **NaN** |
 
-| Métrique | Baseline | Post-amélio | Delta | % |
-| --- | ---: | ---: | ---: | ---: |
-| `faithfulness` | 0.5932 | **0.9122** | **+0.3190** | **+53.8% ✅** |
-| `context_utilization` | 0.9062 | 0.7165 | -0.1897 | -20.9% ⚠️ |
-| `context_precision` | 0.6238 | 0.7130 | +0.0892 | +14.3% ✅ |
-| `context_recall` | 0.8524 | 0.7698 | -0.0826 | -9.7% ⚠️ |
+### Interpretation
 
-### Analyse des résultats
+- `faithfulness` est correct : les reponses restent majoritairement ancrees dans le contexte recupere.
+- `context_utilization` est a surveiller : l'information contextuelle est partiellement exploitee.
+- `context_precision` est critique : une part importante des documents recuperes est hors cible.
+- `context_recall` est critique : le retrieval ne couvre pas assez la base de reference attendue.
+- `answer_relevancy` reste indisponible dans cette pile (`ragas==0.1.22`) a cause d'une erreur interne connue (`TypeError: unsupported operand type(s) for +=: 'dict' and 'dict'`).
 
-**Gain principal** : `faithfulness` +53.8% — le durcissement du SYSTEM_PROMPT anti-hallucination, le reranking et le branchement des filtres ont sensiblement réduit les affirmations non ancrées dans le contexte.
+### Points faibles identifies (par question)
 
-Les 3 runs ci-dessus correspondent au pipeline courant, après correctif du filtre temporel par chevauchement d'intervalle.
+- Plus faible `faithfulness` : *sortie famille* (`0.3636`).
+- Plus faible `context_utilization` : *activite gratuite adolescents* (`0.1667`).
+- Plus faible `context_precision` : *spectacle a Aubervilliers* (`0.0000`).
+- Plus faible `context_recall` : *sciences/astronomie* (`0.0000`).
 
-Correctif applique ensuite dans `search_hybrid` :
+### Conclusion operationnelle
 
-- conserver un événement si son intervalle `[event_start, event_end]` croise la fenêtre `[after_date, before_date]`;
-- equivalent logique : `event_end >= after_date` et `event_start <= before_date`.
-
-Ce correctif evite d'exclure a tort les événements recurrents (date de debut ancienne, date de fin future), et corrige le cas `sortie en famille ce week-end` qui retournait 0 document.
-
-**Note** : la variabilité inter-runs reste moderee (std ≤ 0.07), avec une stabilite particulierement bonne sur `context_utilization`.
-
-### Limitation technique — answer_relevancy desactivee en version prod
-
-- `answer_relevancy` est conservee en commentaire dans le script et sera reactivee ulterieurement.
-- Le choix prod actuel privilegie des métriques stables et reproductibles avec l'environnement present.
+- La fiabilite de generation est globalement correcte.
+- Le principal levier d'amelioration se situe dans le retrieval (precision + rappel) plutot que dans la generation.
+- La comparaison future devra conserver la meme base ground truth manuelle et la meme fenetre de dates pour rester comparable.
 
 ## Améliorations RAG implémentées (phase 2)
 

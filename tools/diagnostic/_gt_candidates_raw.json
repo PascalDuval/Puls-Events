@@ -1,0 +1,601 @@
+[
+  {
+    "id": "Q1",
+    "label": "Concert de jazz en Île-de-France",
+    "question": "as-tu un concert de jazz en Île-de-France ?",
+    "events": [
+      {
+        "title_fr": "Zoot Sundays! Sessions Jazz du dimanche",
+        "location_city": "Paris",
+        "firstdate_begin": "2026-01-25T18:30:00+00:00",
+        "lastdate_end": "2026-01-25T19:30:00+00:00",
+        "keywords_fr": [
+          "Jazz"
+        ],
+        "canonicalurl": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-2634862"
+      },
+      {
+        "title_fr": "Zoot Sundays! Sessions Jazz du dimanche",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-12-07T18:30:00+00:00",
+        "lastdate_end": "2025-12-07T21:30:00+00:00",
+        "keywords_fr": [
+          "Jazz"
+        ],
+        "canonicalurl": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche"
+      },
+      {
+        "title_fr": "Zoot Sundays! Sessions Jazz du dimanche",
+        "location_city": "Paris",
+        "firstdate_begin": "2026-01-18T18:30:00+00:00",
+        "lastdate_end": "2026-01-18T21:30:00+00:00",
+        "keywords_fr": [
+          "Jazz"
+        ],
+        "canonicalurl": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-3744553"
+      },
+      {
+        "title_fr": "Zoot Sundays! Sessions Jazz du dimanche",
+        "location_city": "PARIS",
+        "firstdate_begin": "2025-12-28T18:30:00+00:00",
+        "lastdate_end": "2025-12-28T19:30:00+00:00",
+        "keywords_fr": [
+          "Jazz"
+        ],
+        "canonicalurl": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-6998413"
+      },
+      {
+        "title_fr": "Zoot Sundays! Sessions Jazz du dimanche",
+        "location_city": "Paris",
+        "firstdate_begin": "2026-01-04T18:30:00+00:00",
+        "lastdate_end": "2026-01-04T21:30:00+00:00",
+        "keywords_fr": [
+          "Jazz"
+        ],
+        "canonicalurl": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-6168089"
+      },
+      {
+        "title_fr": "Zoot Sundays! Sessions Jazz du dimanche",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-12-21T18:30:00+00:00",
+        "lastdate_end": "2025-12-21T21:30:00+00:00",
+        "keywords_fr": [
+          "Jazz"
+        ],
+        "canonicalurl": "https://openagenda.com/jassclub-paris/events/zoot-sundays-sessions-jazz-du-dimanche-6950591"
+      }
+    ]
+  },
+  {
+    "id": "Q2",
+    "label": "Exposition photo en Île-de-France",
+    "question": "je cherche une exposition photo en Île-de-France",
+    "events": [
+      {
+        "title_fr": "Initiation à la retouche photo",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-07-12T14:00:00+00:00",
+        "lastdate_end": "2025-07-12T16:00:00+00:00",
+        "keywords_fr": [
+          "Retouche photo"
+        ],
+        "canonicalurl": "https://openagenda.com/echosciences/events/initiation-a-la-retouche-photo-6965209"
+      },
+      {
+        "title_fr": "Exposition photo",
+        "location_city": "Saint-Germain-en-Laye",
+        "firstdate_begin": "2025-09-20T08:00:00+00:00",
+        "lastdate_end": "2025-09-20T17:00:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/culture/events/exposition-photo-6320279"
+      },
+      {
+        "title_fr": "Expo Photo d'Arcy à Bois d'Arcy / Thème libre",
+        "location_city": "Bois-d'Arcy",
+        "firstdate_begin": "2026-04-11T08:00:00+00:00",
+        "lastdate_end": "2026-04-12T16:00:00+00:00",
+        "keywords_fr": [
+          "expo",
+          "photo",
+          "bois d'arcy",
+          "yvelines",
+          "photo d'arcy"
+        ],
+        "canonicalurl": "https://openagenda.com/bois-darcy/events/expo-photo-darcy-a-bois-darcy-theme-libre"
+      },
+      {
+        "title_fr": "Atelier photo",
+        "location_city": "Éragny",
+        "firstdate_begin": "2025-08-21T08:30:00+00:00",
+        "lastdate_end": "2025-08-21T10:00:00+00:00",
+        "keywords_fr": [
+          "Jardins ouverts",
+          "Atelier",
+          "Photo"
+        ],
+        "canonicalurl": "https://openagenda.com/jardins-ouverts-2025/events/atelier-photo-2624676"
+      },
+      {
+        "title_fr": "Expo Photo \"c'est la fête !\"",
+        "location_city": "Saint-Hilarion",
+        "firstdate_begin": "2026-03-21T09:00:00+00:00",
+        "lastdate_end": "2026-03-23T17:00:00+00:00",
+        "keywords_fr": [
+          "Expo",
+          "Photo",
+          "Saint-Hilarion"
+        ],
+        "canonicalurl": "https://openagenda.com/totaleimpro20/events/expo-photo-cest-la-fete"
+      },
+      {
+        "title_fr": "SALON DE LA PHOTO",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-10-09T08:00:00+00:00",
+        "lastdate_end": "2025-10-12T17:00:00+00:00",
+        "keywords_fr": [
+          "photographie amateurs professionnels matériels exposition salon"
+        ],
+        "canonicalurl": "https://openagenda.com/totaleimpro20/events/salon-de-la-photo"
+      }
+    ]
+  },
+  {
+    "id": "Q3",
+    "label": "Sortie famille / enfants en Île-de-France",
+    "question": "quelle sortie pour une famille avec enfants en Île-de-France ?",
+    "events": [
+      {
+        "title_fr": "Sans Famille",
+        "location_city": "Nanterre",
+        "firstdate_begin": "2025-09-24T12:00:00+00:00",
+        "lastdate_end": "2025-09-24T15:00:00+00:00",
+        "keywords_fr": [
+          "Les Lumières",
+          "Sans Famille"
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/sans-famille-5910025"
+      },
+      {
+        "title_fr": "Dimanche au Vert en famille avec enfants de 3 à 10 ans  - Parc de l'Ile St Germain à Issy-les-Moulineaux",
+        "location_city": "Issy-les-Moulineaux",
+        "firstdate_begin": "2025-09-14T10:00:00+00:00",
+        "lastdate_end": "2026-05-17T12:00:00+00:00",
+        "keywords_fr": [
+          "Nature",
+          "Sortie nature",
+          "enfant (éveil nature…)",
+          "pratiques créatives"
+        ],
+        "canonicalurl": "https://openagenda.com/econature/events/decouverte-nature-en-famille-avec-enfants-de-2-a-10-ans-parc-de-lile-st-germain-a-issy-les-moulineaux"
+      },
+      {
+        "title_fr": "Atelier danse parent-enfant",
+        "location_city": "Villeneuve-Saint-Georges",
+        "firstdate_begin": "2025-10-04T08:00:00+00:00",
+        "lastdate_end": "2025-10-04T09:00:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/biblis-en-folie-2025/events/atelier-danse-parent-enfant-9025923"
+      },
+      {
+        "title_fr": "Monument jeu d'enfant",
+        "location_city": "Champs-sur-Marne",
+        "firstdate_begin": "2025-10-18T10:30:00+00:00",
+        "lastdate_end": "2025-10-19T16:30:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/chateau-champs-sur-marne/events/monument-jeu-denfant-5601574"
+      },
+      {
+        "title_fr": "Une famille royale malmenée",
+        "location_city": "Versailles",
+        "firstdate_begin": "2025-11-22T14:15:00+00:00",
+        "lastdate_end": "2025-11-22T15:00:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/histoire-de-lire/events/une-famille-royale-malmenes"
+      },
+      {
+        "title_fr": "Vélo en famille",
+        "location_city": "Verneuil-sur-Seine",
+        "firstdate_begin": "2025-05-17T08:00:00+00:00",
+        "lastdate_end": "2025-05-17T09:30:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/maiavelo/events/velo-en-famille-297369"
+      }
+    ]
+  },
+  {
+    "id": "Q4",
+    "label": "Sciences / astronomie en Île-de-France",
+    "question": "propose-moi une activité autour des sciences ou de l'astronomie",
+    "events": [
+      {
+        "title_fr": "Le planétarium",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-08-26T09:00:00+00:00",
+        "lastdate_end": "2026-09-27T17:00:00+00:00",
+        "keywords_fr": [
+          "planetarium",
+          "planètes",
+          "lune",
+          "mars"
+        ],
+        "canonicalurl": "https://openagenda.com/aplf-planetariums/events/le-planetarium-45240"
+      },
+      {
+        "title_fr": "Planétarium",
+        "location_city": "Deuil-la-Barre",
+        "firstdate_begin": "2026-05-23T14:00:00+00:00",
+        "lastdate_end": "2026-05-23T19:30:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/culture/events/planetarium-2483703"
+      },
+      {
+        "title_fr": "Les pionnières de l'astronomie",
+        "location_city": "Paris",
+        "firstdate_begin": "2026-02-11T14:40:00+00:00",
+        "lastdate_end": "2026-02-11T15:40:00+00:00",
+        "keywords_fr": [
+          "astronomie",
+          "femmes"
+        ],
+        "canonicalurl": "https://openagenda.com/echosciences/events/les-pionnieres-de-lastronomie"
+      },
+      {
+        "title_fr": "The Moon",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-07-17T14:00:00+00:00",
+        "lastdate_end": "2025-07-17T14:40:00+00:00",
+        "keywords_fr": [
+          "astronomie",
+          "planétarium"
+        ],
+        "canonicalurl": "https://openagenda.com/echosciences/events/the-moon"
+      },
+      {
+        "title_fr": "Exposition d'astronomie",
+        "location_city": "Vaujours",
+        "firstdate_begin": "2025-09-20T12:00:00+00:00",
+        "lastdate_end": "2025-09-21T16:00:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/culture/events/astronomie-6275824"
+      },
+      {
+        "title_fr": "Initiation à l'astronomie - stage de science pour les 12-14 ans",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-10-27T09:00:00+00:00",
+        "lastdate_end": "2025-10-27T16:30:00+00:00",
+        "keywords_fr": [
+          "ASTRONOMIE",
+          "ETOILE"
+        ],
+        "canonicalurl": "https://openagenda.com/echosciences/events/initiation-a-lastronomie-stage-de-science-pour-les-6-8-ans-8948224"
+      }
+    ]
+  },
+  {
+    "id": "Q5",
+    "label": "Événements à Aubervilliers",
+    "question": "propose-moi un spectacle à Aubervilliers",
+    "events": [
+      {
+        "title_fr": "Inauguration Place des Beaux-Sons, 1ere mondiale",
+        "location_city": "Aubervilliers",
+        "firstdate_begin": "2026-06-21T08:30:00+00:00",
+        "lastdate_end": "2026-06-21T10:00:00+00:00",
+        "keywords_fr": [
+          "paysage sonore",
+          "écologie sonore",
+          "patrimoine immatériel",
+          "déambulation sonore",
+          "concert de paysage",
+          "fanfare",
+          "théâtre de rue"
+        ],
+        "canonicalurl": "https://openagenda.com/culture/events/inauguration-place-des-beaux-sons-1ere-mondiale"
+      },
+      {
+        "title_fr": "Passez à l'action avec la Fresque de la transformation écologique !",
+        "location_city": "Aubervilliers",
+        "firstdate_begin": "2025-11-19T13:00:00+00:00",
+        "lastdate_end": "2025-11-19T16:00:00+00:00",
+        "keywords_fr": [
+          "veolia",
+          "sensibilisation",
+          "Fresque de la transformation écologique",
+          "climat",
+          "environnement",
+          "Unlock Local Energy",
+          "serious game",
+          "immersif",
+          "collaborateurs"
+        ],
+        "canonicalurl": "https://openagenda.com/semaine-industrie-2025/events/passez-a-laction-avec-la-fresque-de-la-transformation-ecologique-7480844"
+      },
+      {
+        "title_fr": "FRANCE TRAVAIL RECRUTE SES FUTURS CONSEILLERS A L'EMPLOI H/F - DT 93",
+        "location_city": "Aubervilliers",
+        "firstdate_begin": "2025-10-20T12:00:00+00:00",
+        "lastdate_end": "2025-10-20T14:00:00+00:00",
+        "keywords_fr": [
+          "#TousMobilisés",
+          "1 jeune  1 solution",
+          "S'informer",
+          "Découverte secteur / métier",
+          "Recrutement"
+        ],
+        "canonicalurl": "https://openagenda.com/francetravail/events/france-travail-recrute-ses-futurs-conseillers-a-lemploi-hf-dt-93-4777974"
+      },
+      {
+        "title_fr": "POLYCHROMA: Lumières déviantes",
+        "location_city": "Aubervilliers",
+        "firstdate_begin": "2026-05-30T12:00:00+00:00",
+        "lastdate_end": "2026-05-30T21:59:00+00:00",
+        "keywords_fr": [
+          "fierté",
+          "LGBTQ+",
+          "queer",
+          "afro",
+          "soirée",
+          "performance",
+          "DJ",
+          "concert",
+          "théâtre",
+          "marché",
+          "inclusivité",
+          "diversité",
+          "Aubervilliers",
+          "Pride",
+          "fête",
+          "communauté",
+          "open air",
+          "électronique"
+        ],
+        "canonicalurl": "https://openagenda.com/le-point-fort-aubervilliers/events/polychroma-lumieres-deviantes"
+      },
+      {
+        "title_fr": "Découvrez le patrimoine funéraire du cimetière d'Aubervilliers avec Mementour",
+        "location_city": "Aubervilliers",
+        "firstdate_begin": "2025-09-20T08:00:00+00:00",
+        "lastdate_end": "2025-09-20T09:00:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/culture/events/decouvrez-le-patrimoine-funeraire-du-cimetiere-daubervilliers-avec-mementour"
+      },
+      {
+        "title_fr": "Pinoy Festival",
+        "location_city": "Aubervilliers",
+        "firstdate_begin": "2026-06-28T08:00:00+00:00",
+        "lastdate_end": "2026-06-28T19:00:00+00:00",
+        "keywords_fr": [
+          "Philippines",
+          "Pinoy",
+          "culture philippine",
+          "indépendance",
+          "festival",
+          "diaspora",
+          "Bayanihan",
+          "danse",
+          "musique",
+          "cuisine",
+          "jeux traditionnels",
+          "défilé",
+          "communauté",
+          "solidarité",
+          "fierté",
+          "France",
+          "première fois"
+        ],
+        "canonicalurl": "https://openagenda.com/le-point-fort-aubervilliers/events/pinoy-festival"
+      }
+    ]
+  },
+  {
+    "id": "Q6",
+    "label": "Activité pour adolescents en Île-de-France",
+    "question": "propose-moi une activité gratuite pour adolescents en Île-de-France",
+    "events": [
+      {
+        "title_fr": "Atelier théâtre \"Et si on rejouait le film ?\"",
+        "location_city": "Paris",
+        "firstdate_begin": "2026-03-05T14:45:00+00:00",
+        "lastdate_end": "2026-03-05T17:45:00+00:00",
+        "keywords_fr": [
+          "Sept Parnassiens",
+          "Atelier théâtre \"Et si on rejouait le film ?\""
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/atelier-theatre-et-si-on-rejouait-le-film"
+      },
+      {
+        "title_fr": "Kamishibaï des Petits Loups",
+        "location_city": "Paris",
+        "firstdate_begin": "2026-02-26T14:45:00+00:00",
+        "lastdate_end": "2026-02-26T17:45:00+00:00",
+        "keywords_fr": [
+          "Sept Parnassiens",
+          "Kamishibaï des Petits Loups"
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/kamishibai-des-petits-loups"
+      },
+      {
+        "title_fr": "Le Garçon et le Héron pour les fêtes de fin d'année !",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-12-30T14:45:00+00:00",
+        "lastdate_end": "2025-12-30T17:45:00+00:00",
+        "keywords_fr": [
+          "Sept Parnassiens",
+          "Le Garçon et le Héron pour les fêtes de fin d'année !"
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/le-garcon-et-le-heron-pour-les-fetes-de-fin-dannee"
+      },
+      {
+        "title_fr": "Ciné-Gourmand",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-11-26T14:45:00+00:00",
+        "lastdate_end": "2025-11-26T17:45:00+00:00",
+        "keywords_fr": [
+          "Sept Parnassiens",
+          "Ciné-Gourmand"
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/cine-gourmand-9473739"
+      },
+      {
+        "title_fr": "Le Grand Noël des Animaux pour les fêtes de fin d'année !",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-12-26T14:45:00+00:00",
+        "lastdate_end": "2025-12-26T17:45:00+00:00",
+        "keywords_fr": [
+          "Sept Parnassiens",
+          "Le Grand Noël des Animaux pour les fêtes de fin d'année !"
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/le-grand-noel-des-animaux-pour-les-fetes-de-fin-dannee"
+      },
+      {
+        "title_fr": "Le Manuel d'une jeune mariée",
+        "location_city": "Lagny-sur-Marne",
+        "firstdate_begin": "2025-09-21T15:00:00+00:00",
+        "lastdate_end": "2025-09-21T16:20:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/culture/events/le-manuel-dune-jeune-mariee"
+      }
+    ]
+  },
+  {
+    "id": "Q7",
+    "label": "Atelier créatif / artistique en Île-de-France",
+    "question": "y a-t-il un atelier créatif ou artistique pour adultes en Île-de-France ?",
+    "events": [
+      {
+        "title_fr": "Atelier PREMIERES NEIGES",
+        "location_city": "Antony",
+        "firstdate_begin": "2025-12-03T13:00:00+00:00",
+        "lastdate_end": "2025-12-03T16:00:00+00:00",
+        "keywords_fr": [
+          "Le Sélect",
+          "Atelier PREMIERES NEIGES"
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/atelier-premieres-neiges"
+      },
+      {
+        "title_fr": "Atelier LE CHANT DES FÔRETS",
+        "location_city": "Antony",
+        "firstdate_begin": "2025-12-17T13:00:00+00:00",
+        "lastdate_end": "2025-12-17T16:00:00+00:00",
+        "keywords_fr": [
+          "Le Sélect",
+          "Atelier LE CHANT DES FÔRETS"
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/atelier-le-chant-des-forets"
+      },
+      {
+        "title_fr": "Atelier LES TOUTES PETITES CREATURES 2",
+        "location_city": "Antony",
+        "firstdate_begin": "2026-02-11T14:30:00+00:00",
+        "lastdate_end": "2026-02-11T17:30:00+00:00",
+        "keywords_fr": [
+          "Le Sélect",
+          "Atelier LES TOUTES PETITES CREATURES 2"
+        ],
+        "canonicalurl": "https://openagenda.com/scare/events/atelier-les-toutes-petites-creatures-2"
+      },
+      {
+        "title_fr": "Atelier SENIOR 360",
+        "location_city": "Plaisir",
+        "firstdate_begin": "2026-01-22T13:00:00+00:00",
+        "lastdate_end": "2026-01-22T14:30:00+00:00",
+        "keywords_fr": [
+          "Mobilisation 50 ans et plus",
+          "S'informer",
+          "Aides à l'emploi"
+        ],
+        "canonicalurl": "https://openagenda.com/francetravail/events/atelier-senior-360-2774026"
+      },
+      {
+        "title_fr": "Atelier SENIOR 360",
+        "location_city": "Plaisir",
+        "firstdate_begin": "2025-12-08T13:00:00+00:00",
+        "lastdate_end": "2025-12-08T16:00:00+00:00",
+        "keywords_fr": [
+          "Mobilisation 50 ans et plus",
+          "1 jeune  1 solution",
+          "S'informer",
+          "Aides à l'emploi"
+        ],
+        "canonicalurl": "https://openagenda.com/francetravail/events/atelier-senior-360-903850"
+      },
+      {
+        "title_fr": "Atelier \"Networking\"",
+        "location_city": "Paris",
+        "firstdate_begin": "2025-12-10T12:00:00+00:00",
+        "lastdate_end": "2025-12-10T14:00:00+00:00",
+        "keywords_fr": [
+          "Atelier networking HEC Alumni Paris"
+        ],
+        "canonicalurl": "https://openagenda.com/unidivers-oui-sortir/events/atelier-networking-6215534"
+      }
+    ]
+  },
+  {
+    "id": "Q8",
+    "label": "Danse contemporaine en Île-de-France",
+    "question": "je cherche un événement autour de la danse contemporaine",
+    "events": [
+      {
+        "title_fr": "Solos - Danse contemporaine - Journée Internationale de la Danse",
+        "location_city": "Paris",
+        "firstdate_begin": "2026-04-26T13:00:00+00:00",
+        "lastdate_end": "2026-04-26T15:00:00+00:00",
+        "keywords_fr": [
+          "danse",
+          "danse contemporaine",
+          "spectacle"
+        ],
+        "canonicalurl": "https://openagenda.com/theatre-mandapa/events/solos-danse-contemporaine-journee-internationale-de-la-danse"
+      },
+      {
+        "title_fr": "Spectacle de danse contemporaine - Troc !",
+        "location_city": "Jouy-en-Josas",
+        "firstdate_begin": "2026-05-23T16:30:00+00:00",
+        "lastdate_end": "2026-05-23T19:00:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/culture/events/spectacle-de-danse-contemporaine-troc"
+      },
+      {
+        "title_fr": "Danse contemporaine parmi les sculptures",
+        "location_city": "Égreville",
+        "firstdate_begin": "2025-05-17T19:30:00+00:00",
+        "lastdate_end": "2025-05-17T20:00:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/ndm-2025-ile-de-france/events/danse-contemporaine-parmi-les-sculptures"
+      },
+      {
+        "title_fr": "PLATEAUX DANSE",
+        "location_city": "Bagnolet",
+        "firstdate_begin": "2025-06-06T18:00:00+00:00",
+        "lastdate_end": "2025-06-06T19:00:00+00:00",
+        "keywords_fr": null,
+        "canonicalurl": "https://openagenda.com/ville-de-bagnolet/events/plateaux-danse"
+      },
+      {
+        "title_fr": "Master-classe avec Orlando Bass",
+        "location_city": "Versailles",
+        "firstdate_begin": "2025-05-03T12:00:00+00:00",
+        "lastdate_end": "2025-05-03T15:00:00+00:00",
+        "keywords_fr": [
+          "Master-classe",
+          "création contemporaine"
+        ],
+        "canonicalurl": "https://openagenda.com/boxsons/events/master-classe-avec-orlando-bass"
+      },
+      {
+        "title_fr": "Danse pour tous",
+        "location_city": "Meudon",
+        "firstdate_begin": "2025-07-12T09:00:00+00:00",
+        "lastdate_end": "2025-07-13T10:30:00+00:00",
+        "keywords_fr": [
+          "danse",
+          "atelier",
+          "danse pour tous"
+        ],
+        "canonicalurl": "https://openagenda.com/jardins-ouverts-2025/events/danse-pour-tous"
+      }
+    ]
+  }
+]
