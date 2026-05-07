@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import statistics
 from pathlib import Path
 from typing import Any, Dict, List
@@ -112,6 +113,56 @@ def load_manual_ground_truth(path: str, expected_questions: List[str]) -> List[s
         )
 
     return [mapping[q] for q in expected_questions]
+
+
+def _safe_parse_score(raw: str) -> float:
+    """Extrait un score [0,1] depuis une reponse JSON ou textuelle."""
+    text = (raw or "").strip()
+    try:
+        obj = json.loads(text)
+        score = float(obj.get("score"))
+        return max(0.0, min(1.0, score))
+    except Exception:
+        pass
+
+    match = re.search(r"([01](?:\.\d+)?)", text)
+    if not match:
+        return 0.0
+    score = float(match.group(1))
+    return max(0.0, min(1.0, score))
+
+
+def _compute_answer_relevancy_fallback(llm: ChatMistralAI, question: str, answer: str) -> float:
+    """Score de pertinence reponse/question en secours quand RAGAS renvoie NaN."""
+    prompt = (
+        "Tu es un evaluateur. Note de 0.0 a 1.0 dans quelle mesure la reponse traite la question.\n"
+        "Criteres:\n"
+        "- 1.0: reponse directement pertinente et utile.\n"
+        "- 0.5: partiellement pertinente.\n"
+        "- 0.0: hors sujet ou inutilisable.\n"
+        "Reponds STRICTEMENT en JSON compact: {\"score\": <float>}\n\n"
+        f"Question: {question}\n"
+        f"Reponse: {answer}\n"
+    )
+    content = llm.invoke(prompt).content
+    return _safe_parse_score(str(content))
+
+
+def fill_answer_relevancy_if_nan(results_df: pd.DataFrame, llm: ChatMistralAI) -> pd.DataFrame:
+    """Remplit answer_relevancy avec un fallback LLM si RAGAS le laisse vide."""
+    if "answer_relevancy" not in results_df.columns:
+        results_df["answer_relevancy"] = float("nan")
+
+    needs_fallback = results_df["answer_relevancy"].isna()
+    if not needs_fallback.any():
+        return results_df
+
+    print("\n[INFO] answer_relevancy indisponible via RAGAS -> calcul fallback LLM en cours...")
+    for idx in results_df.index[needs_fallback]:
+        q = str(results_df.at[idx, "question"])
+        a = str(results_df.at[idx, "answer"])
+        results_df.at[idx, "answer_relevancy"] = _compute_answer_relevancy_fallback(llm, q, a)
+    return results_df
 
 
 def run_rag_collection(chatbot: MistralRAGChatbot, questions: List[str], k: int) -> tuple[List[str], List[List[str]], List[List[Dict[str, Any]]]]:
@@ -264,6 +315,7 @@ def main() -> None:
         )
 
         results_df = results.to_pandas()
+        results_df = fill_answer_relevancy_if_nan(results_df, mistral_llm)
 
         print("\n=== Resultats bruts (par question) ===")
         pd.set_option("display.max_rows", None)
