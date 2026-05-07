@@ -1,9 +1,9 @@
 # Pull-Events - OpenAgenda IDF et pipeline RAG culturel
 
-## Démarrage rapide après clonage
+## Prise en main
 
 Ce projet s'adresse à un informaticien qui veut cloner, lancer, puis adapter le bot.
-Les informations essentielles sont volontairement au debut.
+Les informations essentielles sont volontairement au début.
 
 ### 1. Cloner et se placer dans le bon dossier
 
@@ -12,7 +12,7 @@ git clone https://github.com/PascalDuval/Puls-Events.git
 cd Puls-Events/Pull-Events
 ```
 
-### 2. Installer l'environnement
+### 2. Créer et activer l'environnement
 
 Option conda (recommandée) :
 
@@ -26,15 +26,22 @@ Option venv :
 
 ```bash
 python -m venv .venv
+# Windows PowerShell
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-### 3. Configurer votre paramétrage
+### 3. Configurer la clé API Mistral
 
-Configurer `MISTRAL_API_KEY` (variable d'environnement ou fichier `.env`).
+Configurer `MISTRAL_API_KEY` dans l'environnement (ou via un fichier `.env` compatible avec vos scripts).
 
-### 4. Exécuter le pipeline dans l'ordre
+### 4. Lancer les scripts dans l'ordre
+
+1. `openagenda_culture_france_rag.py` : collecte OpenAgenda + génération du corpus RAG JSONL.
+2. `vectorize_events_mistral.py` : création des embeddings Mistral à partir du corpus.
+3. `index_events_faiss.py` : construction de l'index FAISS + métadonnées associées.
+4. `chatbot_cli.py` (optionnel) : validation rapide en ligne de commande.
+5. `PullEventsIDFBot.py` via Streamlit : interface utilisateur finale.
 
 ```bash
 python openagenda_culture_france_rag.py
@@ -44,7 +51,100 @@ python chatbot_cli.py --question "as-tu un concert de jazz a Paris ?"
 python -m streamlit run PullEventsIDFBot.py
 ```
 
-Si les artefacts sont déjà présents et cohérents dans `data/`, vous pouvez lancer directement Streamlit.
+### 5. Choix rapide : lancer directement Streamlit
+
+Si les artefacts (`data/evenements_..._rag.jsonl`, `data/evenements_..._vectors.jsonl`, `data/faiss_index.idx` et fichiers metadata) sont déjà présents et cohérents, il est possible de lancer directement :
+
+```bash
+python -m streamlit run PullEventsIDFBot.py
+```
+
+### Commandes détaillées (développement local)
+
+Les commandes ci-dessous sont à exécuter depuis le dossier `Pull-Events/` avec l'interpréteur conda local.
+
+#### Activer l'environnement et installer les dépendances
+
+```bash
+conda activate LLMRag
+pip install -r requirements.txt
+```
+
+#### (Re)générer le corpus RAG OpenAgenda
+
+```bash
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe openagenda_culture_france_rag.py
+```
+
+Sortie attendue :
+
+- `data/evenements_publics_openagenda_culture_ile_de_france_rag.jsonl`
+
+#### Vectoriser le corpus
+
+Si un fichier `.env` contenant `MISTRAL_API_KEY` est disponible :
+
+```bash
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe vectorize_events_mistral.py --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env"
+```
+
+Sinon, la clé peut être fournie par variable d'environnement ou argument CLI.
+
+Sortie attendue :
+
+- `data/evenements_publics_openagenda_culture_ile_de_france_vectors.jsonl`
+
+#### Construire l'index FAISS
+
+```bash
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe index_events_faiss.py
+```
+
+Artefacts générés :
+
+- `data/faiss_index.idx`
+- `data/faiss_metadata.pkl`
+- `data/faiss_id_mapping.pkl`
+
+#### Exécuter les tests
+
+```bash
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/unit -q
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_rag_quality_guard.py -q
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_faiss_indexing.py -q
+```
+
+##### Détail des tests unitaires par étape logique (23 tests)
+
+1. Étape 1 - Couche LangChain (3 tests) — `tests/unit/test_langchain_chain.py`
+2. Étape 2 - Parsing temporel (6 tests) — `tests/unit/test_temporal_deixis.py`
+3. Étape 3 - Préparation des documents (5 tests) — `tests/unit/test_vectorize_events_mistral.py`
+4. Étape 4 - Guardrails (2 tests) — `tests/unit/test_rag_chatbot_mistral.py`
+5. Étape 5 - Pipeline RAG (6 tests) — `tests/unit/test_rag_chatbot_mistral.py`
+6. Étape 6 - Résolution clé API (1 test) — `tests/unit/test_vectorize_events_mistral.py`
+
+Vérification du total : 3 + 6 + 5 + 2 + 6 + 1 = 23 tests unitaires.
+
+#### Interroger le chatbot
+
+```bash
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe chatbot_cli.py --question "as-tu un concert de jazz a Paris ?"
+```
+
+#### Lancer l'interface Streamlit
+
+```bash
+cd Pull-Events
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m streamlit run PullEventsIDFBot.py
+```
+
+L'interface s'ouvre automatiquement dans le navigateur à l'adresse `http://localhost:8501`.
+
+#### Vérifier manuellement les statistiques d'index
+
+```bash
+C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_faiss_indexing.py -q
+```
 
 > Pour mesurer les performances du chatbot (latence, hit-rate, p95), voir la section [Benchmark de performance du chatbot RAG](#benchmark-de-performance-du-chatbot-rag) plus bas dans ce fichier.
 
@@ -98,7 +198,7 @@ Le projet couvre toute la chaine technique suivante :
 ### Qu'est-ce que LangChain et a quoi ca sert ?
 
 LangChain est un framework Python open source concu pour construire des applications basees sur des modeles de langage (LLM).
-Son role n'est pas de fournir un modele lui-meme, mais d'offrir une **couche d'abstraction** au-dessus des SDK des differents fournisseurs (Mistral, OpenAI, Anthropic, Ollama, etc.).
+Son role n'est pas de fournir un modele lui-meme, mais d'offrir une **couche d'abstraction** au-dessus des SDK (Software Development Kit) des differents fournisseurs (Mistral, OpenAI, Anthropic, Ollama, etc.).
 
 Concretement, LangChain standardise trois choses :
 
@@ -108,7 +208,7 @@ Concretement, LangChain standardise trois choses :
 | L'appel au LLM | `client.chat(model=..., messages=..., temperature=...)` | `llm.invoke(messages)` |
 | L'appel aux embeddings | `client.embeddings(model=..., input=[...])` | `embeddings.embed_query(text)` |
 
-L'avantage principal : si tu changes de fournisseur LLM, tu changes une ligne d'import et le constructeur. Le reste du code (guardrails, retrieval FAISS, format de reponse) n'est pas touche.
+L'avantage principal : pour changer de fournisseur LLM, il suffit de modifier une ligne d'import et le constructeur. Le reste du code (guardrails, retrieval FAISS, format de reponse) n'est pas touche.
 
 ### Comment LangChain est implemente dans ce projet
 
@@ -205,7 +305,7 @@ Le projet est concu pour rendre cette migration simple grace a l'injection de de
 
 ### Cas 1 — Changer uniquement le LLM de generation (le plus simple)
 
-Tu gardes tes embeddings Mistral et ton index FAISS actuel. Seule la generation change.
+Les embeddings Mistral et l'index FAISS actuel sont conservés. Seule la generation change.
 
 **Impact** : aucune regeneration d'index necessaire.
 
@@ -428,160 +528,6 @@ Les composants les plus importants sont :
 - `faiss-cpu` pour l'index vectoriel,
 - `numpy` pour la manipulation des embeddings,
 - `pytest` pour la validation.
-
-## Instructions de reproduction
-
-## Procedure inversee (depuis le dépôt distant)
-
-Cette procedure permet a un tout nouvel utilisateur de repartir de zero depuis GitHub, d'installer l'environnement puis d'exécuter le pipeline dans le bon ordre.
-
-### 1. Cloner le dépôt distant
-
-```bash
-git clone https://github.com/PascalDuval/Puls-Events.git
-cd Puls-Events/Pull-Events
-```
-
-### 2. Créer et activer l'environnement
-
-Option conda (recommandée) :
-
-```bash
-conda create -n LLMRag python=3.10 -y
-conda activate LLMRag
-pip install -r requirements.txt
-```
-
-Option venv :
-
-```bash
-python -m venv .venv
-# Windows PowerShell
-.venv\\Scripts\\Activate.ps1
-pip install -r requirements.txt
-```
-
-### 3. Definir la clé API Mistral
-
-Configurer `MISTRAL_API_KEY` dans l'environnement (ou via un fichier `.env` compatible avec vos scripts).
-
-### 4. Lancer les scripts dans l'ordre (adaptation possible)
-
-1. `openagenda_culture_france_rag.py` : collecte OpenAgenda + génération du corpus RAG JSONL.
-2. `vectorize_events_mistral.py` : creation des embeddings Mistral a partir du corpus.
-3. `index_events_faiss.py` : construction de l'index FAISS + métadonnées associées.
-4. `chatbot_cli.py` (optionnel) : validation rapide en ligne de commande.
-5. `PullEventsIDFBot.py` via Streamlit : interface utilisateur finale.
-
-Exemples de lancement :
-
-```bash
-python openagenda_culture_france_rag.py
-python vectorize_events_mistral.py
-python index_events_faiss.py
-python chatbot_cli.py --question "as-tu un concert de jazz a Paris ?"
-python -m streamlit run PullEventsIDFBot.py
-```
-
-### 5. Choix rapide : lancer directement Streamlit
-
-Si les artefacts (`data/evenements_..._rag.jsonl`, `data/evenements_..._vectors.jsonl`, `data/faiss_index.idx` et fichiers metadata) sont déjà présents et cohérents, vous pouvez lancer directement :
-
-```bash
-python -m streamlit run PullEventsIDFBot.py
-```
-
-Les commandes ci-dessous sont celles a exécuter depuis le dossier `Pull-Events/`.
-
-### 1. Activer l'environnement
-
-```bash
-conda activate LLMRag
-```
-
-### 2. Installer les dépendances
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. (Re)générer le corpus RAG OpenAgenda
-
-```bash
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe openagenda_culture_france_rag.py
-```
-
-Sortie attendue :
-
-- `data/evenements_publics_openagenda_culture_ile_de_france_rag.jsonl`
-
-### 4. Vectoriser le corpus
-
-Si vous disposez d'un fichier `.env` contenant `MISTRAL_API_KEY` :
-
-```bash
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe vectorize_events_mistral.py --env-file "C:/Users/karap/OpenClassRooms/projet11/coursEtExos/8532116-mettez-en-place-un-rag-pour-un-llm/.env"
-```
-
-Sinon, vous pouvez fournir la clé directement par variable d'environnement ou argument CLI selon votre mode d'exécution.
-
-Sortie attendue :
-
-- `data/evenements_publics_openagenda_culture_ile_de_france_vectors.jsonl`
-
-### 5. Construire l'index FAISS
-
-```bash
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe index_events_faiss.py
-```
-
-Artefacts générés :
-
-- `data/faiss_index.idx`
-- `data/faiss_metadata.pkl`
-- `data/faiss_id_mapping.pkl`
-
-### 6. Exécuter les tests
-
-```bash
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/unit -q
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_rag_quality_guard.py -q
-C:/Users/karap/anaconda3/envs/LLMRag/python.exe -m pytest tests/integration/test_faiss_indexing.py -q
-```
-
-#### Détail des tests unitaires par étape logique (23 tests)
-
-1. Étape 1 - Couche LangChain (3 tests)
-Scripts de test :
-- `tests/unit/test_langchain_chain.py`
-
-2. Étape 2 - Parsing temporel (6 tests)
-Scripts de test :
-- `tests/unit/test_temporal_deixis.py`
-
-3. Étape 3 - Preparation des documents (5 tests)
-Scripts de test :
-- `tests/unit/test_vectorize_events_mistral.py`
-
-4. Étape 4 - Guardrails (2 tests)
-Scripts de test :
-- `tests/unit/test_rag_chatbot_mistral.py`
-
-5. Étape 5 - Pipeline RAG (6 tests)
-Scripts de test :
-- `tests/unit/test_rag_chatbot_mistral.py`
-
-6. Étape 6 - Résolution clé API (1 test)
-Scripts de test :
-- `tests/unit/test_vectorize_events_mistral.py`
-
-Verification du total : 3 + 6 + 5 + 2 + 6 + 1 = 23 tests unitaires.
-
-Note de répartition par script :
-- `tests/unit/test_langchain_chain.py` : 3 tests
-- `tests/unit/test_temporal_deixis.py` : 6 tests
-- `tests/unit/test_vectorize_events_mistral.py` : 6 tests (dont la résolution de clé API)
-- `tests/unit/test_rag_chatbot_mistral.py` : 8 tests (dont 2 guardrails)
 
 ## Benchmark de performance du chatbot RAG
 
